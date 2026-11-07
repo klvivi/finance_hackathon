@@ -1,4 +1,4 @@
-"""Restore the demo to a clean state: a ledger with September 2026 closed and October not started.
+"""Reset local bookkeeping activity while retaining demo client reference data.
 
     python -m backend.reset              # wipe ledger, inbox, generated PDFs; keep agent + memory + run history
     python -m backend.reset --regenerate # also regenerate the synthetic dataset first
@@ -17,6 +17,40 @@ from .ingest import _insert_txn
 from .money import parse_amount
 
 
+def _insert_reference_clients(c) -> None:
+    hist = json.loads((config.SEED_DIR / "history.json").read_text())
+    for cl in hist["clients"]:
+        c.execute(
+            "INSERT OR IGNORE INTO clients (id, name, email, aliases, terms_days, revenue_account) VALUES (?,?,?,?,?,?)",
+            (cl["id"], cl["name"], cl["email"], json.dumps(cl["aliases"]), cl["terms_days"], cl["revenue_account"]),
+        )
+
+
+def ensure_reference_clients() -> int:
+    """Keep bundled demo clients available so delivery logs can be matched after a clean reset."""
+    before = db.q1("SELECT COUNT(*) AS n FROM clients")["n"]
+    with db.tx() as c:
+        _insert_reference_clients(c)
+    after = db.q1("SELECT COUNT(*) AS n FROM clients")["n"]
+    return after - before
+
+
+def reset_empty() -> dict:
+    db.close()
+    for p in (config.DB_PATH, config.DB_PATH.with_suffix(".sqlite-wal"), config.DB_PATH.with_suffix(".sqlite-shm")):
+        p.unlink(missing_ok=True)
+    for d in (config.INBOX, config.OUT):
+        shutil.rmtree(d, ignore_errors=True)
+    config.ensure_dirs()
+    with db.tx() as c:
+        _insert_reference_clients(c)
+        db.audit(c, "system", "reset_empty", {"mode": "clean_slate"})
+        ok = journal.trial_balance_ok(c)
+    n = db.q1("SELECT COUNT(*) AS n FROM transactions")["n"]
+    clients = db.q1("SELECT COUNT(*) AS n FROM clients")["n"]
+    return {"transactions": n, "clients": clients, "trial_balance_ok": ok, "mode": "clean_slate"}
+
+
 def reset(regenerate: bool = False) -> dict:
     if regenerate:
         from seed import generate
@@ -30,9 +64,7 @@ def reset(regenerate: bool = False) -> dict:
 
     hist = json.loads((config.SEED_DIR / "history.json").read_text())
     with db.tx() as c:
-        for cl in hist["clients"]:
-            c.execute("INSERT INTO clients (id, name, email, aliases, terms_days, revenue_account) VALUES (?,?,?,?,?,?)",
-                      (cl["id"], cl["name"], cl["email"], json.dumps(cl["aliases"]), cl["terms_days"], cl["revenue_account"]))
+        _insert_reference_clients(c)
         for r in hist["rules"]:
             c.execute("INSERT INTO rules (pattern, account, origin, note, created_at) VALUES (?,?, 'builtin', ?, ?)",
                       (r["pattern"], r["account"], r["note"], db.now()))

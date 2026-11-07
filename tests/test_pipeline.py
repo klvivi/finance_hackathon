@@ -44,6 +44,27 @@ def section(name):
         return books.SECTIONS[name](c, P)
 
 
+def test_clean_slate_keeps_clients_for_demo_invoices():
+    reset.reset_empty()
+    assert db.q1("SELECT COUNT(*) AS n FROM transactions")["n"] == 0
+    assert db.q1("SELECT COUNT(*) AS n FROM clients")["n"] > 0
+
+    from backend.ingest import register_upload
+    delivery_file = config.DEMO_DIR / "brightwave_deliveries_2026-10.csv"
+    register_upload(delivery_file.name, delivery_file.read_bytes())
+    imported = call("ingest_file", file=delivery_file.name)
+    assert imported["deliveries_added"] == 7, imported
+    assert imported["unknown_clients"] == [], imported
+
+    with db.tx() as c:
+        deliveries = invoicing.unbilled_deliveries(c, P)
+    assert deliveries, "delivered work should be available to invoice"
+    delivery = deliveries[0]
+    invoice = invoicing.create_invoice(client_id=delivery["client_id"], delivery_ids=[delivery["id"]],
+                                       issue_date=delivery["date"], actor="test")
+    assert invoice["status"] == "draft" and invoice["total_minor"] > 0, invoice
+
+
 def run_close(learned_rules=None, fix_broken_row=True):
     reset.reset()
     load_demo_files()
@@ -187,6 +208,7 @@ def test_journal_is_immutable():
 
 
 if __name__ == "__main__":
+    test_clean_slate_keeps_clients_for_demo_invoices()
     test_journal_is_immutable()
     test_reconciliation_flags_a_missing_row()
     test_finds_a_transaction_missing_from_the_export()

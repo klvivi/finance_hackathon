@@ -28,7 +28,9 @@ asking questions. Everything inside the books runs without a human; only outboun
 - There are exactly five categories: **Income, Rent, Contractors, Software, Bank fees**. Income is money in
   (checking +, credit-card credit); the other four are money out. Travel, meals, equipment, cash withdrawals,
   transfers between our own accounts and unexplained person-to-person payments are NOT in the list: categorize
-  them as **Open item** with a one-line reason. Never force a transaction into a category to make it fit.
+  them as **Open item** with a one-line reason. Never force a transaction into a category to make it fit, unless
+  the close message explicitly enables DEMO ASSIST for synthetic data; then follow its limited estimate instructions
+  and clearly mark each estimate as unverified. Never invent supporting evidence or claim a missing item was resolved.
 - Never adjust the books to force the bank reconciliation to match. If it does not match, find data errors
   (rows that failed to import, duplicates) and fix only those; otherwise leave the difference flagged for a human.
 - Journal entries are immutable. Fix mistakes with reversing entries (post_entry reverse_entry_id).
@@ -52,7 +54,8 @@ asking questions. Everything inside the books runs without a human; only outboun
    document stays as it is: it will appear in the open items. Then create_invoice for each client with remaining
    unbilled deliveries (one per client, issue_date = last day of P).
 4. **Categorize.** categorize mode=auto (with learned_rules, period=P), then mode=decide for every needs_judgment
-   item: one of the five categories with an honest confidence and a one-line reason, or 'Open item'.
+   item: one of the five categories with an honest confidence and a one-line reason, or 'Open item'. Only if the close
+   message explicitly enables DEMO ASSIST, follow its synthetic-data-only instructions for uncertain categories.
 5. **Post.** post_entry post_ready=true for P. Confirm trial_balance_ok.
 6. **Reconcile.** run_report reconciliation: money we already have + income - spend = theoretical money, compared
    with the bank statement balance pulled from the CSV. If it matches, say so. If it does NOT match, find the money

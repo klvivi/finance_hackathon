@@ -47,7 +47,9 @@ DECLARATIONS: list[dict] = [
             "mode='auto': runs deterministic rules (built-in + `learned_rules` you recalled from memory) and similarity to "
             "approved history, and returns `needs_judgment` items it could not decide. "
             "mode='decide': submit decisions=[{txn_id, category, confidence, reason}]. If no category fits or you do not "
-            "know, use category 'Open item' so a human decides in review; never force a guess. "
+            "know, use category 'Open item' so a human decides in review; never force a guess. The only exception is "
+            "when the close message explicitly enables DEMO ASSIST: then follow its synthetic-data-only instructions "
+            "for best-effort category estimates, mark each reason as a demo estimate, and leave evidence-dependent issues open. "
             f"Confidence below {config.REVIEW_THRESHOLD} also becomes an open item. Client deposits that pay an open invoice "
             "are recorded with match_payment instead."),
         "input_schema": {

@@ -26,7 +26,8 @@ from .runtime import runtime
 logging.basicConfig(level=logging.INFO)
 config.ensure_dirs()
 if not config.DB_PATH.exists():
-    reset_mod.reset()
+    db.conn()
+reset_mod.ensure_reference_clients()
 
 mcp_app = mcp_asgi()
 
@@ -93,6 +94,7 @@ async def files():
 class CloseReq(BaseModel):
     period: str = PERIOD
     message: str = "Close October"
+    demo_assist: bool = False
 
 
 @app.post("/api/close")
@@ -100,7 +102,7 @@ async def close(req: CloseReq):
     if runtime.active_run():
         err(RuntimeError("A close is already in progress. Finish or stop it before starting another."), 409)
     try:
-        sid = await runtime.start_close(req.period, req.message)
+        sid = await runtime.start_close(req.period, req.message, demo_assist=req.demo_assist)
     except Exception as e:
         err(e)
     return {"session_id": sid}
@@ -496,13 +498,24 @@ async def webhook(request: Request):
 
 
 @app.post("/api/reset")
-async def do_reset():
+async def do_reset(mode: str = "clean"):
+    if runtime.active_run():
+        err(RuntimeError("A close is in progress. Stop or finish it before clearing data."), 409)
     db.close()
-    r = reset_mod.reset()
+    if mode == "demo":
+        r = reset_mod.reset()
+        msg = "Demo reset: ledger restored (September closed, October not started). Agent memory kept."
+    else:
+        r = reset_mod.reset_empty()
+        msg = "All local ledger data, uploads, reports, and close history were cleared. Agent setup and memory were kept."
+        runtime.state.data["sessions"] = {}
+        runtime.state.data["runs"] = []
+        runtime.state.data.pop("ask_session", None)
     runtime.state.data["current_session"] = None
     runtime.state.data["pending_teach"] = []
     runtime.state.save()
-    runtime.hub.publish("system", text="Demo reset: ledger restored (September closed, October not started). Agent memory kept.")
+    runtime.hub.buffer.clear()
+    runtime.hub.publish("system", text=msg)
     runtime.hub.publish("ledger", text="reset")
     return r
 

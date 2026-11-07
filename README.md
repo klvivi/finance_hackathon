@@ -54,7 +54,7 @@ comes with a formatted sibling (`total_minor` → `total: "$1,234.56"`), and she
 
 ## Key tradeoffs
 1. **Rules first, model last.** Rules and similarity settle most rows for free and identically every month; the model only sees the ambiguous rest.
-2. **Unknown means open item, not a guess.** The category set is fixed. A confident wrong category is worse than an honest "I don't know", and a human resolves it in seconds.
+2. **Unknown means open item, not a guess.** The category set is fixed. A confident wrong category is worse than an honest "I don't know", and a human resolves it in seconds. The Close page also offers an explicitly opt-in demo assist, restricted to bundled synthetic fixtures: it estimates categories for items beyond the five oldest review candidates, labels them unverified, and never fabricates missing receipts, documents, tax forms, or reconciliation sign-offs.
 3. **Reconcile from evidence, never force it.** The agent may fix import errors and book only what the bank's running balance proves; anything else stays flagged.
 4. **Double-entry, immutable journal.** Every posting balances or is rejected; corrections are reversing entries, so the audit trail shows what the agent did and what a human changed.
 5. **Human approval only where it can't be undone.** Internal entries can be reversed; an email to a client can't.
@@ -75,7 +75,7 @@ Reset: `python -m backend.reset` (agent memory is kept on purpose). Clean up: `p
 Check charges under **Usage** in ZooWork Platform.
 
 ## 3-minute demo script
-1. **(0:00)** "End of the month." *Close the books* → *Use sample data* (100 transactions, 2 receipt photos) → **Close October**.
+1. **(0:00)** "End of the month." *Close the books* → upload your own bank or card CSV and any receipts → **Close October**.
 2. **(0:15)** The progress checklist moves on its own: pulling transactions (one broken date fixed and retried, a duplicate removed), receipts read from photos, income matched to invoices, categorizing.
 3. **(1:00)** **Bank reconciliation: Matched.** $49,613.87 + income − spend = $49,604.39 = bank statement.
 4. **(1:15)** **Open items**: travel, cash, a transfer, an unexplained Venmo, a contractor with no W-9, income with no invoice. Resolve two live; the agent will remember them.

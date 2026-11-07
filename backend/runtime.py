@@ -5,6 +5,7 @@ The API key stays in this process. The browser only talks to our FastAPI routes.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
@@ -146,16 +147,28 @@ class Runtime:
             return None
 
     # ---- the close
-    async def start_close(self, period: str, label: str) -> str:
+    async def start_close(self, period: str, label: str, *, demo_assist: bool = False) -> str:
         ok, why = self.ready()
         if not ok:
             raise RuntimeError(why)
         if self.active_run():
             raise RuntimeError("A close is already in progress. Finish or stop it before starting another.")
         aid = self.state.agent_id
-        files = db.rows(db.q("SELECT name, kind FROM files ORDER BY name"))
+        files = db.rows(db.q("SELECT name, kind, sha256 FROM files ORDER BY name"))
         if not files:
-            raise RuntimeError("No files uploaded. Upload statements or click 'Load demo files'.")
+            raise RuntimeError("No files uploaded yet. Upload your CSV and any receipts, then start the close.")
+        if demo_assist:
+            fixture_roots = (config.DEMO_DIR, config.DATA / "scenarios")
+            fixture_hashes = {
+                hashlib.sha256(path.read_bytes()).hexdigest()
+                for root in fixture_roots if root.exists()
+                for path in root.rglob("*") if path.is_file()
+            }
+            if any(file["sha256"] not in fixture_hashes for file in files):
+                raise RuntimeError(
+                    "Demo assist is restricted to the bundled synthetic demo files. "
+                    "Turn it off before closing books that contain any other uploads."
+                )
         self.hub.publish("system", text=f"Uploading {len(files)} files to the agent workspace…")
         for f in files:
             ws = await self.upload(config.INBOX / f["name"], f"inbox/{f['name']}")
@@ -165,9 +178,9 @@ class Runtime:
         sid = session["session_id"]
         run_no = len(self.state.data["runs"]) + 1
         self.state.data["sessions"][sid] = {"kind": "close", "period": period, "cursor": None, "active": True,
-                                            "run_no": run_no, "started": time.time()}
+                                            "run_no": run_no, "started": time.time(), "demo_assist": demo_assist}
         self.state.data["runs"].append({"run_no": run_no, "session_id": sid, "period": period, "started": time.time(),
-                                        "status": "running"})
+                                        "status": "running", "demo_assist": demo_assist})
         self.state.data["current_session"] = sid
         self.state.save()
         manifest = "\n".join(f"- /workspace/inbox/{f['name']} ({f['kind']})" for f in files)
@@ -176,6 +189,17 @@ class Runtime:
             # on this deployment, so they are not used: a retry would duplicate them.)
             content = (f"{label}\n\nPeriod: {period}. Today is {time.strftime('%Y-%m-%d')}.\n"
                        f"Files uploaded for this close (ledger inbox name = workspace file name):\n{manifest}")
+            if demo_assist:
+                content += (
+                    "\n\nDEMO ASSIST IS ENABLED FOR THIS RUN. Use it only with fictional or synthetic data. "
+                    "For ambiguous transaction categories, keep the five oldest category candidates (sort by transaction "
+                    "date ascending) as Open items for human review. For later category candidates, make a best-effort "
+                    "estimate from the available transaction description and history, using only the allowed categories "
+                    "and respecting the income/expense sign rules. Include 'DEMO ESTIMATE (unverified)' in every such "
+                    "decision reason and use your honest confidence; low-confidence decisions remain open for review. "
+                    "Do not invent receipts, invoices/supporting documents, W-9 status, or reconciliation sign-offs. "
+                    "Anything that needs such evidence or has no plausible category must remain open."
+                )
             await self._post(sid, {"type": "user.message", "content": content, "idempotency_key": f"close-{sid}"})
         except Exception:
             self.state.data["runs"][-1]["status"] = "failed_to_start"

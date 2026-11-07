@@ -242,24 +242,42 @@ R.overview=async()=>{
 
 R.close=async()=>{
   const files=await api('/api/files');const a=S.status.active_run;const steps=S.status.steps||[];
-  const pr=a?.progress||(S.ov?.summary?S.status.last_progress:null);
+  const finished=Boolean(S.ov?.summary&&!a);
+  const pr=a?.progress||(finished?S.status.last_progress:null)||(a?{step:'preparing',done:[],note:'Ledgerly is getting started.'}:finished?{step:'done',done:steps.map(([k])=>k),note:''}:{step:'',done:[],note:''});
+  const done=pr.done||[];
+  const delivered=S.ov?.books?.delivered?.status?.startsWith('Final')||false;
+  const machineSteps=steps.map(([k,l])=>{
+    const complete=done.includes(k)||pr.step==='done';
+    const current=!complete&&pr.step===k;
+    return `<li class="${complete?'done':current?'cur':''}"><span class="dot">${complete?'✓':''}</span>${l}</li>`;
+  }).join('');
+  const approvalDone=pr.step==='done'||(finished&&pr.step!=='approval');
+  const approvalClass=pr.step==='approval'?'wait cur':approvalDone?'done':'';
+  const reviewDone=delivered||(finished&&S.ov?.books?.open_items===0);
+  const reviewCurrent=finished&&!reviewDone;
+  const deliveryDone=delivered;
+  const deliveryCurrent=finished&&reviewDone&&!deliveryDone;
+  const stepper=`<ul class="steps">${machineSteps}
+      <li class="${approvalClass}"><span class="dot">${approvalDone?'✓':pr.step==='approval'?'!':''}</span>Send invoices if needed (with your approval)</li>
+      <li class="${reviewDone?'done':reviewCurrent?'cur':''}"><span class="dot">${reviewDone?'✓':''}</span>Review open items</li>
+      <li class="${deliveryDone?'done':deliveryCurrent?'cur':''}"><span class="dot">${deliveryDone?'✓':''}</span>Deliver final books</li></ul>
+      ${pr.note?`<div class="note">${esc(pr.note)}</div>`:''}`;
   const KIND={transactions_csv:'Transactions (checking + card)',bank_csv:'Bank statement (CSV)',card_statement_pdf:'Card statement (PDF)',receipt_image:'Receipt',delivery_log_csv:'Time & delivery log'};
-  const stepper=pr?`<ul class="steps">${steps.map(([k,l])=>{const done=(pr.done||[]).includes(k)||pr.step==='done';const cur=pr.step===k;
-      return `<li class="${done?'done':cur?'cur':''}"><span class="dot">${done?'✓':''}</span>${l}</li>`}).join('')}
-      <li class="${pr.step==='approval'?'wait cur':pr.step==='done'?'done':''}"><span class="dot">${pr.step==='done'?'✓':''}</span>${pr.step==='approval'?'Waiting for your approval to send invoices':'Send invoices (with your approval)'}</li></ul>
-      ${a&&pr.note?`<div class="note">${esc(pr.note)}</div>`:''}`:'';
-  return `<div class="page-head"><div><h1>Close the books</h1><p>Pull transactions → categorize → reconcile → you review → deliver.</p></div></div>
+  return `<div class="page-head"><div><h1>Close the books</h1><p>Follow every step from transaction import through review and final delivery.</p></div><span class="grow"></span>
+    <button class="btn danger" ${a?'disabled':''} onclick="clearEverything(this)">Clear all data</button></div>
   <div class="grid g2">
    <div class="card"><div class="card-h"><h2>1. Transactions and receipts</h2><span class="grow"></span><span class="sub">${files.length} file${files.length===1?'':'s'}</span></div><div class="card-b">
      <div class="drop" id="drop"><b>Drop files here</b> or <a href="#" onclick="$('#fileInput').click();return false">browse</a><div class="sub" style="margin-top:6px">Transactions CSV (Date, Description, Account, Amount, Balance, Receipt) · receipt photos · delivery log</div></div>
      <div class="filelist" style="margin-top:12px">${files.map(f=>`<div>${chip((f.name.split('.').pop()||'').toUpperCase())}<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">${esc(f.name)}</span><span class="sub">${esc(KIND[f.kind]||f.kind)}</span>${f.status.startsWith('ingested')?chip('Imported','ok'):''}</div>`).join('')}</div>
-     ${files.length?'':`<p class="sub" style="margin:12px 0 0">Just exploring? <a href="#" onclick="useSample();return false">Use sample data</a>: 100 transactions for a fictional agency. Or try a <a href="#" onclick="useSample('missing_transaction');return false">bank export with a missing transaction</a>.</p>`}
+     ${files.length?'':`<p class="sub" style="margin:12px 0 0">Start with a clean ledger and upload your own bank or card CSV, plus any receipts you want Ledgerly to review.</p>`}
    </div></div>
    <div class="card"><div class="card-h"><h2>2. Close ${PERIOD_NAME}</h2></div><div class="card-b">
-     ${a?stepper+`<div style="margin-top:16px;display:flex;gap:8px">${pr?.step==='approval'?'<a class="btn primary" href="#approvals">Review emails</a>':''}<button class="btn ghost danger" onclick="stopRun()">Stop</button></div>`
-       :S.ov?.summary?`<div class="banner info" style="margin:0 0 14px">The books are prepared. Review the open items, then deliver.</div>${stepper}<div style="margin-top:14px;display:flex;gap:8px"><a class="btn primary" href="#review">Review open items</a><a class="btn" href="#overview">Overview</a></div>`
+     ${stepper}
+     ${a?`<div style="margin-top:16px;display:flex;gap:8px">${pr?.step==='approval'?'<a class="btn primary" href="#approvals">Review emails</a>':''}<button class="btn ghost danger" onclick="stopRun()">Stop</button></div>`
+       :S.ov?.summary?`<div class="banner info" style="margin:14px 0">The automated close is complete. Review open items, then deliver the final books.</div><div style="display:flex;gap:8px"><a class="btn primary" href="#review">Review open items</a><a class="btn" href="#overview">Overview</a></div>`
        :`<p style="margin-top:0;color:var(--ink-2)">Ledgerly imports every transaction, attaches receipts, sorts each one into Income, Rent, Contractors, Software or Bank fees, reconciles the bank account against the statement, and prepares your books.</p>
          <p class="sub">Anything it can't place goes to <b>Open items</b> for you. It only asks before emailing a client. Usually 2–4 minutes.</p>
+         <label class="note" style="display:block"><input id="demoAssist" type="checkbox"> Demo assist: keep the five oldest category questions for review and let Ledgerly estimate the rest. Synthetic data only; estimates can be wrong.</label>
          <button class="btn primary lg" ${!files.length||!S.status.ready?'disabled':''} onclick="startClose(this)">Close ${PERIOD_NAME}</button>
          ${!S.status.ready?`<p class="sub" style="color:var(--bad)">${esc(S.status.message)}</p>`:''}`}
    </div></div></div>`};
@@ -267,6 +285,8 @@ R.close=async()=>{
 R.review=async()=>{
   const oi=await api('/api/open-items?period='+PERIOD);const pend=S.status.pending_teach||0;
   const open=oi.items.filter(i=>i.status==='Open'),done=oi.items.filter(i=>i.status!=='Open');
+  const shownOpen=open.slice().sort((a,b)=>(a.date||'9999-12-31').localeCompare(b.date||'9999-12-31')||a.key.localeCompare(b.key)).slice(0,5);
+  const moreOpen=open.length-shownOpen.length;
   const KT={category:'Unknown category',receipt:'Missing receipt',document:'Income without document',reconciliation:'Bank reconciliation',contractor_form:'Contractor form'};
   const action=i=>{const k=encodeURIComponent(i.key);
     if(i.kind==='category'){const income=/Income/.test(i.reason)||false;const opts=CATS.map(c=>`<option>${c}</option>`).join('');
@@ -276,12 +296,13 @@ R.review=async()=>{
     if(i.kind==='reconciliation')return `<input type="search" id="rnote" placeholder="Explanation" style="width:200px"> <button class="btn" onclick="resolveItem('${k}','acknowledged',$('#rnote').value||'Reviewed',this)">Acknowledge</button>`;
     if(i.kind==='contractor_form')return `<button class="btn" onclick="resolveItem('${k}','received','W-9 received',this)">W-9 received</button>`;
     return ''};
-  return `<div class="page-head"><div><h1>Open items</h1><p>What Ledgerly couldn't settle on its own. Resolve these, then deliver the books.</p></div><span class="grow"></span>
+  return `<div class="page-head"><div><h1>Open items</h1><p>Showing the ${shownOpen.length} oldest unresolved item${shownOpen.length===1?'':'s'} of ${open.length}. Resolve these, then deliver the books.</p></div><span class="grow"></span>
     ${pend?`<button class="btn" onclick="teach(this)">Remember ${pend} categor${pend>1?'ies':'y'} for next month</button>`:''}
     <button class="btn primary" onclick="deliver(this)">Deliver books</button></div>
+  ${moreOpen?`<div class="banner warn">There are ${moreOpen} additional unresolved items. They remain open and are included in books and reports; they are not marked resolved just because this list is limited to five.</div>`:''}
   ${open.length?'':`<div class="banner info">All open items are resolved. Deliver the books to produce the final package.</div>`}
   <div class="card">${open.length?`<table><tr><th>Item</th><th class="n">Amount</th><th>Reason</th><th style="width:330px">Action</th></tr>
-   ${open.map(i=>`<tr><td><b ${i.txn_id?`style="cursor:pointer" onclick="openTxn(${i.txn_id})"`:''}>${esc(i.item)}</b><div class="sub">${KT[i.kind]}${i.date?' · '+sdate(i.date):''}</div></td><td class="n">${money(i.amount_minor)}</td>
+   ${shownOpen.map(i=>`<tr><td><b ${i.txn_id?`style="cursor:pointer" onclick="openTxn(${i.txn_id})"`:''}>${esc(i.item)}</b><div class="sub">${KT[i.kind]}${i.date?' · '+sdate(i.date):''}</div></td><td class="n">${money(i.amount_minor)}</td>
      <td class="sub" style="max-width:280px">${esc(i.reason)}</td><td>${action(i)}</td></tr>`).join('')}</table>`
    :`<div class="empty"><b>Nothing open</b>Every item has been reviewed.</div>`}</div>
   ${done.length?`<div class="card" style="margin-top:16px"><div class="card-h"><h2>Resolved</h2><span class="sub">${done.length}</span></div><table>
@@ -372,7 +393,7 @@ R.transactions=async()=>{
   ${rows.map(e=>`<tr class="click" onclick="openTxn(${e.txn_id})"><td class="sub">${sdate(e.date)}</td><td>${esc(e.description)}</td><td class="sub">${esc(e.account)}</td><td>${e.category==='Open item'?chip('Open item','warn'):esc(e.category)}</td><td class="sub">${e.type}</td><td class="n">${money(e.type==='Income'?e.amount_minor:-e.amount_minor)}</td><td>${e.receipt==='Missing'?chip('Missing','bad'):e.receipt==='OK'?chip('OK','ok'):`<span class="sub">${esc(e.receipt)}</span>`}</td></tr>`).join('')}</table></div>`};
 
 R.activity=async()=>`<div class="page-head"><div><h1>Activity log</h1><p>Admin view: raw agent events, tool calls and backend results.</p></div><span class="grow"></span>
-  <button class="btn danger" onclick="doReset(this)">Reset demo data</button></div><div class="card card-b log" id="log">${S.log.map(logLine).join('')}</div>`;
+  <button class="btn danger" onclick="clearEverything(this)">Clear all data</button></div><div class="card card-b log" id="log">${S.log.map(logLine).join('')}</div>`;
 function logLine(e){const t=new Date(e.ts*1000).toLocaleTimeString();let s=e.text||'';
   if(e.kind==='tool')s=`${e.phase} ${e.tool} ${e.phase==='start'?e.args||'':e.ok===false?'ERROR '+(e.preview||''):e.reason||''}`;
   if(e.kind==='ledger_tool')s=`${e.phase} ${e.tool} ${e.phase==='start'?e.args:(e.ok?'ok ':'ERROR ')+e.ms+'ms '+(e.preview||'')}`;
@@ -436,8 +457,7 @@ function pickReceipt(id){receiptFor=id;$('#receiptInput').click()}
 $('#receiptInput').onchange=async e=>{const f=e.target.files[0];if(!f||!receiptFor)return;const fd=new FormData();fd.append('file',f);
   await api('/api/receipt/'+receiptFor,{method:'POST',body:fd});e.target.value='';toast('Receipt attached');await refresh();render()};
 async function upload(fl){if(!fl.length)return;const fd=new FormData();[...fl].forEach(f=>fd.append('files',f));await api('/api/upload',{method:'POST',body:fd});toast(`${fl.length} file${fl.length>1?'s':''} uploaded`);render()}
-async function useSample(sc){await api('/api/demo-files'+(sc?'?scenario='+sc:''),{method:'POST'});toast('Sample data loaded (fictional agency, 100 transactions)');render()}
-async function startClose(b){b.disabled=true;b.textContent='Starting…';try{await api('/api/close',{method:'POST',body:{period:PERIOD,message:'Close October'}});toast('Close started. You can leave this page; Ledgerly keeps working.')}catch(e){b.disabled=false;b.textContent='Close '+PERIOD_NAME}await refresh();render()}
+async function startClose(b){b.disabled=true;b.textContent='Starting…';try{await api('/api/close',{method:'POST',body:{period:PERIOD,message:'Close October',demo_assist:$('#demoAssist')?.checked||false}});toast('Close started. You can leave this page; Ledgerly keeps working.')}catch(e){b.disabled=false;b.textContent='Close '+PERIOD_NAME}await refresh();render()}
 async function stopRun(){await api('/api/interrupt',{method:'POST'});toast('Stopping…');setTimeout(soon,1500)}
 async function decide(id,d,b){b.parentElement.querySelectorAll('button').forEach(x=>x.disabled=true);await api('/api/approvals/'+id,{method:'POST',body:{decision:d}});
   toast(d==='deny'?'Email held back. The invoice stays a draft.':'Approved. Sending…');setTimeout(async()=>{await refresh();render()},1200)}
@@ -447,8 +467,12 @@ async function resolveItem(key,res,note,b){b.disabled=true;try{await api('/api/o
 async function teach(b){b.disabled=true;const r=await api('/api/teach',{method:'POST'});toast(`Ledgerly is saving ${r.rules} rule${r.rules>1?'s':''} for next month`);await refresh();render()}
 async function deliver(b){b.disabled=true;const r=await api('/api/deliver?period='+PERIOD,{method:'POST'});toast(r.status);window.open(r.url,'_blank');await refresh();render()}
 async function trigger(b){b.disabled=true;await api('/api/schedule/trigger',{method:'POST'});toast('Checking for overdue invoices. Any reminders will appear in Approvals.')}
-async function doReset(b){if(!b.dataset.arm){b.dataset.arm=1;b.textContent='Click again to confirm';setTimeout(()=>{delete b.dataset.arm;b.textContent='Reset demo data'},3000);return}
-  await api('/api/reset',{method:'POST'});toast('Demo data reset');await refresh();render()}
+async function clearEverything(b){
+  if(!confirm('Clear local transactions, inbox uploads, generated reports, and close history? The demo client directory, agent setup, agent-workspace copies, and learned memory will be kept. This cannot be undone.'))return;
+  b.disabled=true;
+  try{await api('/api/reset?mode=clean',{method:'POST'});S.log=[];toast('Ledger cleared. Demo clients are ready for delivery-log matching.');await refresh();render()}
+  finally{b.disabled=false}
+}
 
 (async()=>{await refresh();render();connect();setInterval(async()=>{const n=S.approvals.length;S.approvals=await api('/api/approvals').catch(()=>S.approvals);if(n!==S.approvals.length){drawNav();if(['approvals','overview'].includes(page()))render()}},6000)})();
 </script>
