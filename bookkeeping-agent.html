@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bookkeeping Agent</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: ledger. Single reading column, hairline-ruled bands, a sample workbook as the centerpiece. */
+:root{
+  --bg:#F3F6F2; --surface:#FFFFFF; --fg:#16231D; --muted:#5B6A62; --rule:#D5DDD6;
+  --accent:#1E6B57; --accent-soft:#E2EFE9; --warn:#A8670F; --warn-soft:#F8ECD8; --bad:#A33A2C;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1613; --surface:#16201B; --fg:#E4ECE7; --muted:#97A69E; --rule:#2A3832;
+  --accent:#5FC2A4; --accent-soft:#1A3029; --warn:#E3A44A; --warn-soft:#33281A; --bad:#E57B6C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1613; --surface:#16201B; --fg:#E4ECE7; --muted:#97A69E; --rule:#2A3832;
+  --accent:#5FC2A4; --accent-soft:#1A3029; --warn:#E3A44A; --warn-soft:#33281A; --bad:#E57B6C; color-scheme:dark}
+
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.6;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:40px 64px}
+.wrap{max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(2.1rem,6vw,3.3rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.6rem;font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.05rem;font-weight:600}
+p{margin:0;max-width:65ch}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.lede{font-size:1.15rem;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:20px;border-top:1px solid var(--rule);padding-top:28px}
+.head{display:flex;flex-direction:column;gap:12px}
+.tag{display:inline-block;font-family:var(--mono);font-size:.72rem;padding:2px 8px;border-radius:4px;background:var(--warn-soft);color:var(--warn);width:max-content}
+
+/* Fluxo mensal */
+.flow{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;counter-reset:s}
+.flow li{position:relative;padding:16px 14px 16px 0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.flow li::before{counter-increment:s;content:counter(s);font-family:var(--mono);font-size:.8rem;width:28px;height:28px;border-radius:50%;
+  display:grid;place-items:center;background:var(--accent);color:var(--bg);font-weight:500}
+.flow li:not(:last-child)::after{content:"";position:absolute;top:30px;left:34px;right:6px;height:1px;background:var(--rule)}
+.flow h3{font-size:.98rem}
+.flow p{font-size:.88rem;color:var(--muted)}
+.flow li.you::before{background:var(--warn)}
+@media (max-width:760px){.flow{grid-template-columns:1fr}.flow li{flex-direction:row;flex-wrap:wrap;gap:4px 12px;padding:10px 0}
+  .flow li::after{display:none}.flow li > div{flex:1;min-width:0}}
+
+/* Planilha de exemplo */
+.sheet{background:var(--surface);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--rule);padding:8px 8px 0}
+.tabs button{font-family:var(--mono);font-size:.78rem;border:1px solid transparent;border-bottom:none;background:none;color:var(--muted);
+  padding:8px 12px;border-radius:6px 6px 0 0;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--rule)}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.panel{padding:18px;display:flex;flex-direction:column;gap:12px}
+.panel > p{font-size:.92rem;color:var(--muted)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.86rem;min-width:560px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
+th{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+td.n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+th.n{text-align:right}
+.pill{font-family:var(--mono);font-size:.72rem;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.pill.w{background:var(--warn-soft);color:var(--warn)}
+.pill.t{background:transparent;border:1px solid var(--rule);color:var(--muted)}
+.check{display:flex;gap:10px;align-items:baseline;font-family:var(--mono);font-size:.92rem;flex-wrap:wrap}
+.ok{color:var(--accent);font-weight:500}
+.note{font-size:.8rem;color:var(--muted)}
+
+/* Peças ZooWork */
+.parts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.part{background:var(--surface);padding:18px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.part .k{font-family:var(--mono);font-size:.72rem;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+.part p{font-size:.9rem;color:var(--muted)}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+ul.plain{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:8px}
+ul.plain li{max-width:60ch}
+.never li::marker{color:var(--bad)}
+.yes li::marker{color:var(--accent)}
+footer{font-size:.82rem;color:var(--muted);border-top:1px solid var(--rule);padding-top:16px}
+@media (prefers-reduced-motion:no-preference){.tabs button{transition:background .15s,color .15s}}
+.ph{display:none}
+[hidden]{display:none!important}
+@media print{
+  .tabs{display:none}
+  .panel[hidden]{display:flex!important}
+  .ph{display:block;font-family:var(--mono);font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+  .panel{break-inside:avoid;border-bottom:1px solid var(--rule)}
+  .sheet-hint{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="head">
+    <span class="eyebrow">Example proposal</span>
+    <h1>Bookkeeping Agent</h1>
+    <p class="lede">An agent that closes the books every month. You upload the bank statement file, and it categorizes every transaction, reconciles against the statement, and hands the accountant a finished workbook. You only review what it flags.</p>
+    <span class="tag">All names and amounts on this page are fictional examples</span>
+  </header>
+
+  <section>
+    <div class="head">
+      <span class="eyebrow">How it works</span>
+      <h2>The monthly close in five steps</h2>
+    </div>
+    <ol class="flow">
+      <li><div><h3>Upload the statement</h3><p>You upload the month&#39;s CSV export and type the closing balance.</p></div></li>
+      <li><div><h3>Categorize</h3><p>Sorts each item: income, rent, software, contractors.</p></div></li>
+      <li><div><h3>Reconcile</h3><p>Checks opening balance + inflows − outflows against the statement.</p></div></li>
+      <li class="you"><div><h3>You review</h3><p>Only items missing a receipt or needing a decision.</p></div></li>
+      <li><div><h3>Deliver</h3><p>Produces the monthly workbook for the accountant.</p></div></li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="head">
+      <span class="eyebrow">What the accountant gets</span>
+      <h2>One workbook per period, with seven tabs</h2>
+      <p class="sheet-hint">Click a tab to see what it contains.</p>
+    </div>
+
+    <div class="sheet">
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div id="panels"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <span class="eyebrow">Built on ZooWork</span>
+      <h2>Which part of the platform does what</h2>
+    </div>
+    <div class="parts">
+      <div class="part"><span class="k">Agent</span><h3>The bookkeeping rules</h3><p>Fixed categorization instructions and the workbook format.</p></div>
+      <div class="part"><span class="k">Schedule</span><h3>Monthly reminder</h3><p>Optional: a reminder at the start of each month to upload the new statement.</p></div>
+      <div class="part"><span class="k">File upload</span><h3>Statement in, no bank login</h3><p>The agent only sees the CSV you upload. It never connects to the bank and never sees a bank password.</p></div>
+      <div class="part"><span class="k">Memory</span><h3>Learns your decisions</h3><p>When you correct a category, the rule carries into future months.</p></div>
+      <div class="part"><span class="k">Permission policies</span><h3>Approval before sending</h3><p>Nothing goes to the accountant without your click.</p></div>
+      <div class="part"><span class="k">Files</span><h3>The final workbook</h3><p>The agent produces the file and we download it ready to send.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <span class="eyebrow">Security</span>
+      <h2>What it can do and what it never does</h2>
+    </div>
+    <div class="two">
+      <div><h3>Can</h3><ul class="plain yes">
+        <li>Read the statement file you upload</li>
+        <li>Suggest categories and flag open items</li>
+        <li>Produce the workbook and monthly summary</li>
+      </ul></div>
+      <div><h3>Never</h3><ul class="plain never">
+        <li>Move money, pay, or transfer</li>
+        <li>Log into the bank or see any key</li>
+        <li>Send anything to the accountant without approval</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="head">
+      <span class="eyebrow">To decide together</span>
+      <h2>Before we build</h2>
+    </div>
+    <ul class="plain">
+      <li>Does the accountant have a preferred format or chart of accounts?</li>
+      <li>Monthly or quarterly close?</li>
+      <li>Later: keep uploading files, or connect the bank directly?</li>
+      <li>Who approves open items and the final send?</li>
+      <li>Which ZooWork account pays for running the agent?</li>
+    </ul>
+  </section>
+
+  <footer>Actual run costs show under Usage in ZooWork Platform. Not accounting advice; confirm everything with the accountant.</footer>
+</div>
+
+<script>
+const tabs = [
+  {k:"Cover", d:"Who the books belong to and the period covered.",
+   head:["Field","Value"], rows:[["Company","Sample Co. LLC"],["Period","October"],["Account","Business checking"],["Opening balance","$ 1,000.00"],["Closing balance","$ 2,090.00"]], num:[]},
+  {k:"Ledger", d:"Every transaction with category, type, and receipt status.",
+   head:["Date","Description","Category","Type","Amount","Receipt"],
+   rows:[["10/01","Client A payment","Sales","income","2,000.00","ok"],["10/05","Office rent","Rent","expense","-500.00","ok"],
+         ["10/10","Freelance designer","Contractors","expense","-300.00","missing"],["10/15","Software subscription","Software","expense","-100.00","ok"],
+         ["10/31","Monthly bank fee","Bank fees","expense","-10.00","ok"]], num:[4], razao:true},
+  {k:"Expenses", d:"Where the money went this month.",
+   head:["Category","Amount"], rows:[["Rent","500.00"],["Contractors","300.00"],["Software","100.00"],["Bank fees","10.00"],["Total","910.00"]], num:[1]},
+  {k:"Reconciliation", d:"The books must match the bank statement.", conc:true},
+  {k:"Income", d:"Money received this month.",
+   head:["From","Date","Amount","Document"], rows:[["Client A","10/01","2,000.00","Invoice #001"]], num:[2]},
+  {k:"Contractors", d:"Payments by contractor and tax form tracking.",
+   head:["Contractor","Total this month","Form"], rows:[["Freelance designer","300.00","W-9 on file"]], num:[1]},
+  {k:"Open items", d:"What needs your decision or a receipt.",
+   head:["Item","Reason","Status"], rows:[["10/10 · Freelance designer","Missing receipt","open"],["10/15 · Software subscription","Confirm category","open"]], num:[], pend:true}
+];
+const tl=document.getElementById("tabs"), pn=document.getElementById("panels");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function cell(t,v,i){
+  if(t.razao&&i===3) return `<td><span class="pill t">${esc(v)}</span></td>`;
+  if(t.razao&&i===5) return `<td><span class="pill ${v==="ok"?"":"w"}">${esc(v)}</span></td>`;
+  if(t.pend&&i===2) return `<td><span class="pill w">${esc(v)}</span></td>`;
+  return t.num.includes(i)?`<td class="n">${esc(v)}</td>`:`<td>${esc(v)}</td>`;
+}
+tabs.forEach((t,i)=>{
+  const b=document.createElement("button");
+  b.id="tab-"+i; b.role="tab"; b.textContent=t.k; b.setAttribute("aria-controls","p-"+i);
+  b.setAttribute("aria-selected", i===1?"true":"false");
+  b.onclick=()=>show(i); tl.appendChild(b);
+  const p=document.createElement("div"); p.className="panel"; p.id="p-"+i; p.role="tabpanel"; p.hidden=i!==1;
+  let body=`<h3 class="ph">${esc(t.k)}</h3><p>${esc(t.d)}</p>`;
+  if(t.conc){
+    body+=`<div class="check"><span>1,000.00</span><span>+ 2,000.00</span><span>− 910.00</span><span>= 2,090.00</span><span class="ok">✓ matches the statement</span></div>
+           <p class="note">Opening balance plus money in, minus money out, equals the closing balance on the bank statement.</p>`;
+  } else {
+    body+=`<div class="tbl"><table><thead><tr>${t.head.map((h,j)=>`<th${t.num.includes(j)?' class="n"':''}>${esc(h)}</th>`).join("")}</tr></thead><tbody>${
+      t.rows.map(r=>`<tr>${r.map((v,j)=>cell(t,v,j)).join("")}</tr>`).join("")}</tbody></table></div>`;
+  }
+  p.innerHTML=body; pn.appendChild(p);
+});
+function show(i){
+  [...tl.children].forEach((b,j)=>b.setAttribute("aria-selected",j===i?"true":"false"));
+  [...pn.children].forEach((p,j)=>p.hidden=j!==i);
+}
+</script>
+</body>
+</html>
