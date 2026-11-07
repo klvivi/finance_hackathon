@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ledgerly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root{
+  --bg:#f5f6f8;--surface:#fff;--surface-2:#f9fafb;--ink:#101828;--ink-2:#344054;--muted:#667085;--line:#e4e7ec;
+  --brand:#1f4fd8;--brand-ink:#fff;--brand-soft:#eef3ff;
+  --ok:#067647;--ok-soft:#ecfdf3;--warn:#b54708;--warn-soft:#fffaeb;--bad:#b42318;--bad-soft:#fef3f2;
+  --shadow:0 1px 2px rgba(16,24,40,.05);--radius:12px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#0c111d;--surface:#161b26;--surface-2:#1f242f;--ink:#f5f5f6;--ink-2:#cecfd2;--muted:#94969c;--line:#2a303c;
+  --brand:#6b8eff;--brand-ink:#0c111d;--brand-soft:#1a2340;--ok:#47cd89;--ok-soft:#0e2a1d;--warn:#fdb022;--warn-soft:#2d2210;
+  --bad:#f97066;--bad-soft:#2e1513;--shadow:none}}
+:root[data-theme=dark]{--bg:#0c111d;--surface:#161b26;--surface-2:#1f242f;--ink:#f5f5f6;--ink-2:#cecfd2;--muted:#94969c;--line:#2a303c;
+  --brand:#6b8eff;--brand-ink:#0c111d;--brand-soft:#1a2340;--ok:#47cd89;--ok-soft:#0e2a1d;--warn:#fdb022;--warn-soft:#2d2210;
+  --bad:#f97066;--bad-soft:#2e1513;--shadow:none}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.app{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100vh}
+/* sidebar */
+aside{background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;padding:0 8px 18px}
+.logo i{width:28px;height:28px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:var(--brand-ink);font-style:normal;font-size:15px}
+.org{font-size:12px;color:var(--muted);padding:0 8px 14px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.org b{display:block;color:var(--ink);font-size:13px;font-weight:600}
+nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--ink-2);font-weight:500}
+nav a:hover{background:var(--surface-2);text-decoration:none}nav a.on{background:var(--brand-soft);color:var(--brand)}
+nav a svg{width:18px;height:18px;flex:none}
+nav .badge{margin-left:auto}
+.side-foot{margin-top:auto;font-size:12px;color:var(--muted);padding:8px}
+/* main */
+main{padding:28px 36px 60px;max-width:1240px;width:100%}
+.page-head{display:flex;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.page-head h1{margin:0;font-size:24px;font-weight:600;letter-spacing:-.01em}
+.page-head p{margin:4px 0 0;color:var(--muted)}
+.grow{flex:1}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-h{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.card-h h2{margin:0;font-size:15px;font-weight:600}.card-b{padding:18px 20px}
+.grid{display:grid;gap:16px}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g32{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+@media (max-width:1100px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g32,.g2{grid-template-columns:1fr}}
+@media (max-width:760px){.app{grid-template-columns:1fr}aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;padding:10px}
+  .org,.side-foot{display:none}.logo{padding:4px 8px}nav{display:flex;flex-wrap:wrap;gap:2px}main{padding:18px 16px}.g4{grid-template-columns:1fr 1fr}}
+.kpi{padding:18px 20px}.kpi small{color:var(--muted);font-weight:500}.kpi b{display:block;font-size:24px;font-weight:600;margin:6px 0 2px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.delta{font-size:12.5px;color:var(--muted)}.up{color:var(--ok)}.down{color:var(--bad)}
+/* controls */
+.btn{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:var(--shadow)}
+.btn:hover{background:var(--surface-2)}.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}.btn.primary:hover{filter:brightness(1.07)}
+.btn.lg{padding:11px 20px;font-size:15px}.btn.ghost{border-color:transparent;box-shadow:none;background:none}
+.btn.danger{color:var(--bad)}.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+select,input[type=search]{font:inherit;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);max-width:100%}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}.chip.warn{background:var(--warn-soft);color:var(--warn)}.chip.bad{background:var(--bad-soft);color:var(--bad)}.chip.info{background:var(--brand-soft);color:var(--brand)}
+.badge{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--bad);color:#fff;font-size:11.5px;font-weight:700;display:inline-grid;place-items:center}
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}tr:last-child td{border-bottom:0}
+.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.sub{color:var(--muted);font-size:12.5px}
+tr.total td{font-weight:700;color:var(--ink);background:var(--brand-soft);border-top:1px solid var(--ink);border-bottom:3px double var(--ink)}tr.sect td{font-weight:600;color:var(--ink);background:var(--surface-2)}
+.fin tr:not(.sect):not(.total) td:first-child{padding-left:22px}
+/* attention list */
+.att{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line)}.att:last-child{border-bottom:0}
+.att .ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none;font-weight:700}
+.att .t{flex:1}.att .t b{display:block;font-weight:600}.att .t span{color:var(--muted);font-size:13px}
+/* stepper */
+.steps{list-style:none;margin:0;padding:0}
+.steps li{display:flex;gap:12px;align-items:center;padding:9px 0;color:var(--muted)}
+.steps .dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;font-size:12px}
+.steps li.done{color:var(--ink-2)}.steps li.done .dot{background:var(--ok);border-color:var(--ok);color:#fff}
+.steps li.cur{color:var(--ink);font-weight:600}.steps li.cur .dot{border-color:var(--brand);border-top-color:transparent;animation:spin 1s linear infinite}
+.steps li.wait .dot{border-color:var(--warn);background:var(--warn-soft)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.note{background:var(--surface-2);border-radius:8px;padding:10px 12px;color:var(--ink-2);font-size:13px;margin-top:10px}
+/* dropzone */
+.drop{border:1.5px dashed var(--line);border-radius:var(--radius);padding:26px;text-align:center;color:var(--muted);transition:.15s}
+.drop.over{border-color:var(--brand);background:var(--brand-soft)}
+.drop b{color:var(--ink)}
+.filelist div{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.filelist div:last-child{border-bottom:0}
+/* misc */
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}.empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+.mail{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:14px;background:var(--surface)}
+.mail-h{padding:14px 18px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:70px 1fr;gap:4px 10px;font-size:13.5px}
+.mail-h span{color:var(--muted)}.mail-b{padding:16px 18px;white-space:pre-wrap;font-size:13.5px;color:var(--ink-2)}
+.mail-f{padding:12px 18px;background:var(--surface-2);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.md h1,.md h2,.md h3{font-size:15px;margin:18px 0 6px}.md h1:first-child,.md h2:first-child{margin-top:0}.md ul{margin:6px 0;padding-left:20px}.md li{margin:3px 0}.md p{margin:6px 0}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+.tabs button{font:inherit;font-weight:500;color:var(--muted);background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;cursor:pointer;margin-bottom:-1px}
+.tabs button.on{color:var(--brand);border-bottom-color:var(--brand)}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--ink);color:var(--surface);padding:12px 16px;border-radius:10px;font-size:13.5px;max-width:380px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:20;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+.banner{display:flex;gap:12px;align-items:center;padding:12px 16px;border-radius:10px;margin-bottom:18px;font-size:13.5px}
+.banner.warn{background:var(--warn-soft);color:var(--warn)}.banner.info{background:var(--brand-soft);color:var(--brand)}.banner.bad{background:var(--bad-soft);color:var(--bad)}
+.hidden{display:none!important}
+.log{font:12px/1.5 ui-monospace,Consolas,monospace;max-height:70vh;overflow:auto;white-space:pre-wrap}
+.log div{padding:3px 0;border-bottom:1px solid var(--line)}
+
+/* ask panel */
+.ask-fab{position:fixed;right:24px;bottom:24px;z-index:30;border-radius:999px;padding:12px 18px;box-shadow:0 8px 24px rgba(16,24,40,.18)}
+.ask{position:fixed;right:24px;bottom:84px;width:380px;max-width:calc(100vw - 32px);height:520px;max-height:calc(100vh - 120px);z-index:30;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 16px 40px rgba(16,24,40,.22);display:flex;flex-direction:column}
+.ask-h{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}.ask-h b{flex:1}
+.ask-b{flex:1;overflow:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.msg{padding:9px 12px;border-radius:12px;max-width:88%;font-size:13.5px;line-height:1.45}
+.msg.me{align-self:flex-end;background:var(--brand);color:var(--brand-ink)}.msg.bot{align-self:flex-start;background:var(--surface-2)}
+.msg.bot ul{margin:4px 0;padding-left:18px}.msg.status{align-self:flex-start;color:var(--muted);font-size:12px;background:none;padding:0 4px}
+.ask-f{padding:10px;border-top:1px solid var(--line);display:flex;gap:8px}.ask-f input{flex:1;font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.sugg{display:flex;flex-wrap:wrap;gap:6px}.sugg button{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:4px 10px;cursor:pointer}
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(16,24,40,.45);z-index:40;display:flex;justify-content:flex-end}
+.modal{width:520px;max-width:100vw;height:100%;background:var(--surface);overflow:auto;padding:24px;box-shadow:-8px 0 24px rgba(0,0,0,.15)}
+.modal h2{margin:0 0 4px;font-size:18px}.kv{display:grid;grid-template-columns:140px 1fr;gap:8px 12px;font-size:13.5px;margin:16px 0}.kv span{color:var(--muted)}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--surface-2)}
+.learn{display:flex;gap:10px;align-items:flex-end;height:90px;margin:8px 0 4px}.learn div{flex:1;text-align:center;font-size:12px;color:var(--muted)}
+.learn i{display:block;background:var(--brand);border-radius:6px 6px 0 0;margin:0 auto 4px;width:60%}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <div class="logo"><i>L</i>Ledgerly</div>
+  <div class="org"><b>Brightwave Studio LLC</b>Books in USD · Period <span id="periodLabel">Oct 2026</span></div>
+  <nav id="nav"></nav>
+  <div class="side-foot" id="sideFoot"></div>
+</aside>
+<main id="main"></main>
+</div>
+<div class="toast" id="toast"></div>
+<input type="file" id="fileInput" multiple hidden accept=".csv,.pdf,.png,.jpg,.jpeg,.webp">
+<button class="btn primary ask-fab" id="askFab" onclick="toggleAsk()">Ask your books</button>
+<div class="ask hidden" id="ask"><div class="ask-h"><b>Ask your books</b><button class="btn ghost" onclick="newAsk()">New</button><button class="btn ghost" onclick="toggleAsk()">✕</button></div>
+<div class="ask-b" id="askBody"><div class="msg bot">Ask anything about October. I answer from the ledger, with the exact figures.</div>
+<div class="sugg"><button onclick="askQ(this.textContent)">Why is software spend up?</button><button onclick="askQ(this.textContent)">Who did we pay as contractors?</button><button onclick="askQ(this.textContent)">Does the bank reconcile?</button><button onclick="askQ(this.textContent)">What's still open?</button></div></div>
+<div class="ask-f"><input id="askIn" placeholder="e.g. What did we spend on rent?" onkeydown="if(event.key==='Enter')askQ(this.value)"><button class="btn primary" onclick="askQ($('#askIn').value)">Ask</button></div></div>
+<div id="modalRoot"></div>
+<input type="file" id="receiptInput" hidden accept=".png,.jpg,.jpeg,.webp,.pdf">
+<script>
+const PERIOD='2026-10', PERIOD_NAME='October 2026';
+const ADMIN=new URLSearchParams(location.search).has('admin');
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const acct=m=>{if(m==null)return '–';const s='$'+(Math.abs(m)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});return m<0?'('+s+')':s};
+const money=m=>(m<0?'-':'')+'$'+(Math.abs(m)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const date=d=>d?new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+const sdate=d=>d?new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
+const ICON={
+ overview:'<path d="M3 12l9-8 9 8M5 10v10h14V10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
+ close:'<path d="M5 4h14v16H5zM9 9h6M9 13h6M9 17h3" fill="none" stroke="currentColor" stroke-width="1.8"/>',
+ review:'<path d="M9 12l2 2 4-4M12 3a9 9 0 100 18 9 9 0 000-18z" fill="none" stroke="currentColor" stroke-width="1.8"/>',
+ approvals:'<path d="M4 6h16v12H4zM4 7l8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
+ invoices:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
+ reports:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="1.8"/>',
+ transactions:'<path d="M4 7h16M4 12h16M4 17h10" fill="none" stroke="currentColor" stroke-width="1.8"/>',
+ activity:'<path d="M3 12h4l3-8 4 16 3-8h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'};
+const PAGES=[['overview','Overview'],['close','Close the books'],['review','Open items'],['approvals','Approvals'],['reports','Books & reports'],['transactions','Ledger'],['invoices','Invoices']];
+if(ADMIN)PAGES.push(['activity','Activity log']);
+const CATS=['Income','Rent','Contractors','Software','Bank fees'];
+
+let S={status:{},ov:null,approvals:[],log:[]};
+async function api(u,o={}){if(o.body&&!(o.body instanceof FormData)){o.body=JSON.stringify(o.body);o.headers={'Content-Type':'application/json'}}
+  const r=await fetch(u,o);const j=await r.json().catch(()=>({}));if(!r.ok){toast(j.detail||'Something went wrong');throw new Error(j.detail)}return j}
+let tt;function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),4200)}
+function md(s){return esc(s).replace(/^### (.*)$/gm,'<h3>$1</h3>').replace(/^## (.*)$/gm,'<h2>$1</h2>').replace(/^# (.*)$/gm,'<h1>$1</h1>')
+ .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`([^`]+)`/g,'$1').replace(/^\s*[-*] (.*)$/gm,'<li>$1</li>')
+ .replace(/(<li>.*<\/li>\n?)+/g,m=>'<ul>'+m+'</ul>').replace(/\n{2,}/g,'<p></p>').replace(/\n/g,' ')}
+const chip=(t,c='')=>`<span class="chip ${c}">${esc(t)}</span>`;
+const recChip=r=>({ok:chip('OK','ok'),missing:chip('Missing','bad'),waived:chip('Not needed'),'n/a':'<span class="sub">–</span>'}[r]||'');
+
+// ------------------------------------------------------------------ navigation
+function page(){return (location.hash.slice(1)||'overview')}
+function drawNav(){
+  const counts={approvals:S.approvals.length,review:S.ov?.books?.open_items||0};
+  $('#nav').innerHTML=PAGES.map(([k,l])=>`<a href="#${k}" class="${page()===k?'on':''}"><svg viewBox="0 0 24 24">${ICON[k]}</svg>${l}${counts[k]?`<span class="badge" ${k==='review'?'style="background:var(--warn)"':''}>${counts[k]}</span>`:''}</a>`).join('');
+  const a=S.status.active_run;
+  $('#sideFoot').innerHTML=!S.status.ready?chip('Not connected','bad'):a?chip('Close in progress','info'):chip('Ready','ok');
+  $('#askFab').classList.toggle('hidden',!S.status.ready);
+  document.title=(S.approvals.length?`(${S.approvals.length}) Approval needed · `:'')+'Ledgerly';
+}
+window.addEventListener('hashchange',()=>{$('#modalRoot').innerHTML='';render()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#modalRoot').innerHTML='';$('#ask').classList.add('hidden')}});
+
+// ------------------------------------------------------------------ data
+async function refresh(){
+  const [st,ov,ap]=await Promise.all([api('/api/status'),api('/api/overview?period='+PERIOD),api('/api/approvals').catch(()=>[])]);
+  S.status=st;S.ov=ov;S.approvals=ap;drawNav();
+}
+let rt;function soon(){clearTimeout(rt);rt=setTimeout(async()=>{await refresh();render(true)},600)}
+function connect(){const es=new EventSource('/api/feed');es.onmessage=m=>{const e=JSON.parse(m.data);
+  if(ASK.sid&&e.session_id===ASK.sid)onAskEvent(e);
+  if(ADMIN){S.log.push(e);if(S.log.length>1500)S.log.shift();if(page()==='activity')appendLog(e)}
+  if(['progress','run','approval','ledger','artifacts'].includes(e.kind))soon()}}
+
+function closeState(){
+  const a=S.status.active_run,b=S.ov?.books;
+  if(a){return a.progress?.step==='approval'?{label:'Waiting for your approval',cls:'warn'}:{label:'In progress',cls:'info'}}
+  if(b?.delivered&&b.delivered.status.startsWith('Final'))return{label:'Delivered',cls:'ok'};
+  if(S.ov?.summary)return{label:'Ready for your review',cls:'warn'};
+  if(S.ov?.imported)return{label:'Partially processed',cls:'warn'};
+  return{label:'Not started',cls:''};
+}
+const REC={not_started:['Not started',''],matched:['Matched','ok'],difference:['Difference','bad'],difference_acknowledged:['Difference (reviewed)','warn'],no_statement:['No statement','warn']};
+
+// ------------------------------------------------------------------ pages
+const R={};
+R.overview=async()=>{
+  const o=S.ov,b=o.books,cs=closeState(),rc=REC[b.reconciliation.status];
+  const att=[];
+  if(S.approvals.length)att.push(['approvals','warn',S.approvals.length,`${S.approvals.length} email${S.approvals.length>1?'s':''} waiting for approval`,'Invoices ready to send to clients.','Review emails']);
+  if(b.reconciliation.status==='difference')att.push(['review','bad','!',`Bank reconciliation is off by ${b.reconciliation.difference}`,'Theoretical money does not match the bank statement.','Investigate']);
+  if(b.open_items)att.push(['review','warn',b.open_items,`${b.open_items} open item${b.open_items>1?'s':''} to review`,'Unknown categories, missing receipts or documents.','Review']);
+  if(o.summary&&!b.open_items&&!(b.delivered&&b.delivered.status.startsWith('Final')))att.push(['reports','info','✓','Books are ready to deliver','All open items are resolved.','Deliver']);
+  if(o.anomalies)att.push(['reports','info','!',`${o.anomalies} unusual charge${o.anomalies>1?'s':''}`,'Duplicate charges, cost spikes or new subscriptions.','View']);
+  const icc={warn:'background:var(--warn-soft);color:var(--warn)',bad:'background:var(--bad-soft);color:var(--bad)',info:'background:var(--brand-soft);color:var(--brand)'};
+  const card=(l,v,s)=>`<div class="card kpi"><small>${l}</small><b>${v}</b><div class="delta">${s}</div></div>`;
+  return `<div class="page-head"><div><h1>${PERIOD_NAME}</h1><p>Month-end books for Brightwave Studio LLC</p></div>${chip(cs.label,cs.cls)}<span class="grow"></span>
+    ${!o.summary&&!S.status.active_run?`<a class="btn primary" href="#close">Close the books</a>`:''}
+    ${o.summary?`<a class="btn" href="/out/reports/books_${PERIOD}.pdf" target="_blank">Open books PDF</a>`:''}</div>
+  ${!S.status.ready?`<div class="banner bad">Ledgerly isn't connected to its agent. ${esc(S.status.message)}</div>`:''}
+  <div class="grid g4">
+    ${card('Income',b.income.fmt,`${o.imported?'money received this month':'no transactions yet'}`)}
+    ${card('Expenses',b.expenses.fmt,`${b.count} ledger entries`)}
+    ${card('Bank reconciliation',`<span style="color:var(--${rc[1]==='ok'?'ok':rc[1]==='bad'?'bad':rc[1]?'warn':'ink'})">${rc[0]}</span>`,b.reconciliation.statement?`statement ${b.reconciliation.statement}`:'no statement yet')}
+    ${card('Open items',b.open_items,`${b.resolved_items} resolved`)}</div>
+  <div class="grid g32" style="margin-top:16px">
+    <div class="card"><div class="card-h"><h2>Notes from Ledgerly</h2></div>
+      <div class="card-b md">${o.summary?md(o.summary.markdown):`<div class="empty"><b>Nothing yet</b>After the close, Ledgerly writes a short summary of what it did and what needs you.</div>`}</div></div>
+    <div><div class="card"><div class="card-h"><h2>Needs your attention</h2></div>
+      ${att.length?att.map(([href,c,n,t,s,bt])=>`<div class="att"><div class="ic" style="${icc[c]}">${n}</div><div class="t"><b>${t}</b><span>${s}</span></div><a class="btn" href="#${href}">${bt}</a></div>`).join(''):`<div class="empty"><b>All clear</b>Nothing needs you right now.</div>`}</div>
+      ${learningCard()}
+      ${b.delivered?`<div class="card" style="margin-top:16px"><div class="card-h"><h2>Last delivered</h2></div><div class="card-b">${esc(b.delivered.status)}<div class="sub">${new Date(b.delivered.created_at).toLocaleString()}</div></div></div>`:''}
+    </div></div>`};
+
+R.close=async()=>{
+  const files=await api('/api/files');const a=S.status.active_run;const steps=S.status.steps||[];
+  const pr=a?.progress||(S.ov?.summary?S.status.last_progress:null);
+  const KIND={transactions_csv:'Transactions (checking + card)',bank_csv:'Bank statement (CSV)',card_statement_pdf:'Card statement (PDF)',receipt_image:'Receipt',delivery_log_csv:'Time & delivery log'};
+  const stepper=pr?`<ul class="steps">${steps.map(([k,l])=>{const done=(pr.done||[]).includes(k)||pr.step==='done';const cur=pr.step===k;
+      return `<li class="${done?'done':cur?'cur':''}"><span class="dot">${done?'✓':''}</span>${l}</li>`}).join('')}
+      <li class="${pr.step==='approval'?'wait cur':pr.step==='done'?'done':''}"><span class="dot">${pr.step==='done'?'✓':''}</span>${pr.step==='approval'?'Waiting for your approval to send invoices':'Send invoices (with your approval)'}</li></ul>
+      ${a&&pr.note?`<div class="note">${esc(pr.note)}</div>`:''}`:'';
+  return `<div class="page-head"><div><h1>Close the books</h1><p>Pull transactions → categorize → reconcile → you review → deliver.</p></div></div>
+  <div class="grid g2">
+   <div class="card"><div class="card-h"><h2>1. Transactions and receipts</h2><span class="grow"></span><span class="sub">${files.length} file${files.length===1?'':'s'}</span></div><div class="card-b">
+     <div class="drop" id="drop"><b>Drop files here</b> or <a href="#" onclick="$('#fileInput').click();return false">browse</a><div class="sub" style="margin-top:6px">Transactions CSV (Date, Description, Account, Amount, Balance, Receipt) · receipt photos · delivery log</div></div>
+     <div class="filelist" style="margin-top:12px">${files.map(f=>`<div>${chip((f.name.split('.').pop()||'').toUpperCase())}<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">${esc(f.name)}</span><span class="sub">${esc(KIND[f.kind]||f.kind)}</span>${f.status.startsWith('ingested')?chip('Imported','ok'):''}</div>`).join('')}</div>
+     ${files.length?'':`<p class="sub" style="margin:12px 0 0">Just exploring? <a href="#" onclick="useSample();return false">Use sample data</a>: 100 transactions for a fictional agency. Or try a <a href="#" onclick="useSample('missing_transaction');return false">bank export with a missing transaction</a>.</p>`}
+   </div></div>
+   <div class="card"><div class="card-h"><h2>2. Close ${PERIOD_NAME}</h2></div><div class="card-b">
+     ${a?stepper+`<div style="margin-top:16px;display:flex;gap:8px">${pr?.step==='approval'?'<a class="btn primary" href="#approvals">Review emails</a>':''}<button class="btn ghost danger" onclick="stopRun()">Stop</button></div>`
+       :S.ov?.summary?`<div class="banner info" style="margin:0 0 14px">The books are prepared. Review the open items, then deliver.</div>${stepper}<div style="margin-top:14px;display:flex;gap:8px"><a class="btn primary" href="#review">Review open items</a><a class="btn" href="#overview">Overview</a></div>`
+       :`<p style="margin-top:0;color:var(--ink-2)">Ledgerly imports every transaction, attaches receipts, sorts each one into Income, Rent, Contractors, Software or Bank fees, reconciles the bank account against the statement, and prepares your books.</p>
+         <p class="sub">Anything it can't place goes to <b>Open items</b> for you. It only asks before emailing a client. Usually 2–4 minutes.</p>
+         <button class="btn primary lg" ${!files.length||!S.status.ready?'disabled':''} onclick="startClose(this)">Close ${PERIOD_NAME}</button>
+         ${!S.status.ready?`<p class="sub" style="color:var(--bad)">${esc(S.status.message)}</p>`:''}`}
+   </div></div></div>`};
+
+R.review=async()=>{
+  const oi=await api('/api/open-items?period='+PERIOD);const pend=S.status.pending_teach||0;
+  const open=oi.items.filter(i=>i.status==='Open'),done=oi.items.filter(i=>i.status!=='Open');
+  const KT={category:'Unknown category',receipt:'Missing receipt',document:'Income without document',reconciliation:'Bank reconciliation',contractor_form:'Contractor form'};
+  const action=i=>{const k=encodeURIComponent(i.key);
+    if(i.kind==='category'){const income=/Income/.test(i.reason)||false;const opts=CATS.map(c=>`<option>${c}</option>`).join('');
+      return `<select id="c_${i.txn_id}"><option value="">Choose category…</option>${opts}</select> <button class="btn" onclick="resolveCat('${k}',${i.txn_id},this)">Save</button>`}
+    if(i.kind==='receipt')return `<button class="btn" onclick="pickReceipt(${i.txn_id})">Upload receipt</button> <button class="btn ghost" onclick="resolveItem('${k}','not needed','',this)">Not needed</button>`;
+    if(i.kind==='document')return `<input type="search" id="d_${i.txn_id}" placeholder="What is this payment for?" style="width:200px"> <button class="btn" onclick="resolveItem('${k}','documented',$('#d_${i.txn_id}').value,this)">Save</button>`;
+    if(i.kind==='reconciliation')return `<input type="search" id="rnote" placeholder="Explanation" style="width:200px"> <button class="btn" onclick="resolveItem('${k}','acknowledged',$('#rnote').value||'Reviewed',this)">Acknowledge</button>`;
+    if(i.kind==='contractor_form')return `<button class="btn" onclick="resolveItem('${k}','received','W-9 received',this)">W-9 received</button>`;
+    return ''};
+  return `<div class="page-head"><div><h1>Open items</h1><p>What Ledgerly couldn't settle on its own. Resolve these, then deliver the books.</p></div><span class="grow"></span>
+    ${pend?`<button class="btn" onclick="teach(this)">Remember ${pend} categor${pend>1?'ies':'y'} for next month</button>`:''}
+    <button class="btn primary" onclick="deliver(this)">Deliver books</button></div>
+  ${open.length?'':`<div class="banner info">All open items are resolved. Deliver the books to produce the final package.</div>`}
+  <div class="card">${open.length?`<table><tr><th>Item</th><th class="n">Amount</th><th>Reason</th><th style="width:330px">Action</th></tr>
+   ${open.map(i=>`<tr><td><b ${i.txn_id?`style="cursor:pointer" onclick="openTxn(${i.txn_id})"`:''}>${esc(i.item)}</b><div class="sub">${KT[i.kind]}${i.date?' · '+sdate(i.date):''}</div></td><td class="n">${money(i.amount_minor)}</td>
+     <td class="sub" style="max-width:280px">${esc(i.reason)}</td><td>${action(i)}</td></tr>`).join('')}</table>`
+   :`<div class="empty"><b>Nothing open</b>Every item has been reviewed.</div>`}</div>
+  ${done.length?`<div class="card" style="margin-top:16px"><div class="card-h"><h2>Resolved</h2><span class="sub">${done.length}</span></div><table>
+   ${done.map(i=>`<tr><td>${esc(i.item)}<div class="sub">${KT[i.kind]}</div></td><td class="n">${money(i.amount_minor)}</td><td>${chip(i.status,'ok')}</td></tr>`).join('')}</table></div>`:''}`};
+
+R.approvals=async()=>{
+  const items=S.approvals.map(a=>{let x={};try{x=JSON.parse(a.arguments_preview||'{}')}catch(e){}return {...a,x}});
+  return `<div class="page-head"><div><h1>Approvals</h1><p>Ledgerly never emails a client without your OK. Approve or hold each message.</p></div></div>
+  ${items.length?`<div class="banner warn">Please respond within 10 minutes. Unanswered emails are held back and the invoice stays a draft.</div>`+items.map(a=>`
+    <div class="mail"><div class="mail-h"><span>To</span><b>${esc(a.x.to||'')}</b><span>Subject</span><b>${esc(a.x.subject||'')}</b>
+      <span>Type</span><span>${a.x.kind==='reminder'?'Payment reminder':'Invoice'}${a.x.invoice_id?' · PDF attached':''}</span></div>
+      <div class="mail-b">${esc(a.x.body||a.arguments_preview||'')}</div>
+      <div class="mail-f"><button class="btn ok" onclick="decide('${a.approval_id}','allow-once',this)">Approve and send</button>
+        <button class="btn" onclick="decide('${a.approval_id}','deny',this)">Don't send</button><span class="grow"></span><span class="sub">Requested ${a.requested_at?new Date(a.requested_at).toLocaleTimeString():''}</span></div></div>`).join('')
+  :`<div class="card"><div class="empty"><b>No emails waiting</b>When Ledgerly wants to send an invoice or a payment reminder, it appears here for your approval.</div></div>`}
+  ${await sentEmails()}`};
+async function sentEmails(){const r=await api('/api/outbox');if(!r.length)return'';
+  return `<div class="card" style="margin-top:20px"><div class="card-h"><h2>Sent</h2></div><table><tr><th>Sent</th><th>To</th><th>Subject</th><th>Type</th></tr>
+  ${r.map(o=>`<tr><td class="sub">${new Date(o.created_at).toLocaleString()}</td><td>${esc(o.to_addr)}</td><td>${esc(o.subject)}</td><td>${o.kind==='reminder'?'Reminder':'Invoice'}</td></tr>`).join('')}</table></div>`}
+
+R.invoices=async()=>{
+  const r=await api('/api/invoices');const st={draft:['warn','Draft'],sent:['info','Sent'],partially_paid:['warn','Partly paid'],paid:['ok','Paid']};
+  const today=new Date().toISOString().slice(0,10);
+  return `<div class="page-head"><div><h1>Invoices</h1><p>Invoices for delivered work, and client payments matched to them.</p></div><span class="grow"></span>
+    ${S.status.ready?`<button class="btn" onclick="trigger(this)">Check for overdue invoices</button>`:''}</div>
+  <div class="card"><table><tr><th>Invoice</th><th>Client</th><th>Issued</th><th>Due</th><th class="n">Amount</th><th class="n">Balance</th><th>Status</th><th></th></tr>
+  ${r.map(i=>{const s=st[i.status]||['',i.status];const over=i.balance_minor>0&&i.due_date<today&&i.status!=='draft';
+    return `<tr><td><b>${esc(i.number)}</b></td><td>${esc(i.client)}<div class="sub">${esc(i.email)}</div></td><td class="sub">${date(i.issue_date)}</td>
+     <td class="sub">${date(i.due_date)}${over?' '+chip('Overdue','bad'):''}</td><td class="n">${money(i.total_minor)}</td><td class="n">${money(i.balance_minor)}</td>
+     <td>${chip(s[1],s[0])}</td><td>${i.pdf?`<a href="${i.pdf}" target="_blank">PDF</a>`:''}</td></tr>`}).join('')}</table></div>`};
+
+let REP='reconciliation';
+const REPORTS=[['ledger','Ledger'],['expenses','Expenses'],['reconciliation','Reconciliation'],['income','Income'],['contractors','Contractors'],['open_items','Open items'],['pnl','Profit & loss'],['balance_sheet','Balance sheet'],['anomalies','Anomalies']];
+R.reports=async()=>{
+  const r=await api(`/api/reports/${REP}?period=${PERIOD}`);const files=await api('/api/report-files');const hasBooks=files.some(f=>f.name.startsWith('books_'));
+  return `<div class="page-head"><div><h1>Books & reports</h1><p>${PERIOD_NAME} · the delivered package has every section below.</p></div><span class="grow"></span>
+    ${hasBooks?`<a class="btn" href="/out/reports/books_${PERIOD}.pdf" target="_blank">Open books PDF</a>`:''}
+    <button class="btn primary" onclick="deliver(this)">Deliver books</button></div>
+  <div class="tabs">${REPORTS.map(([k,l])=>`<button class="${k===REP?'on':''}" onclick="REP='${k}';render()">${l}</button>`).join('')}</div>
+  <div class="card">${reportBody(r)}</div>`};
+function reportBody(r){const M=acct;const row=(l,a,b,cls='')=>`<tr class="${cls}"><td>${l}</td><td class="n">${a}</td>${b!==undefined?`<td class="n">${b}</td>`:''}</tr>`;
+  const nm=x=>esc(x.name);
+  if(r.report==='ledger')return `<div style="max-height:70vh;overflow:auto"><table><tr><th>Date</th><th>Description</th><th>Account</th><th>Category</th><th>Type</th><th class="n">Amount</th><th>Receipt</th></tr>
+    ${r.entries.map(e=>`<tr class="click" onclick="openTxn(${e.txn_id})"><td class="sub">${sdate(e.date)}</td><td>${esc(e.description)}</td><td class="sub">${esc(e.account)}</td><td>${e.category==='Open item'?chip('Open item','warn'):esc(e.category)}</td><td class="sub">${e.type}</td><td class="n">${M(e.amount_minor)}</td><td>${e.receipt==='Missing'?chip('Missing','bad'):e.receipt==='OK'?chip('OK','ok'):esc(e.receipt)}</td></tr>`).join('')}
+    <tr class="total"><td></td><td>Total income</td><td></td><td></td><td></td><td class="n">${M(r.total_income_minor)}</td><td></td></tr>
+    <tr class="total"><td></td><td>Total expenses</td><td></td><td></td><td></td><td class="n">${M(r.total_expenses_minor)}</td><td></td></tr></table></div>`;
+  if(r.report==='expenses')return `<table class="fin"><tr><th>Category</th><th class="n">Oct 2026</th><th class="n">Sep 2026</th></tr>
+    ${r.categories.map(x=>row(esc(x.category)+(x.category==='Open item'?' <span class="sub">(awaiting review)</span>':''),M(x.amount_minor),M(x.prior_minor))).join('')}${row('Total',M(r.total_minor),M(r.prior_total_minor),'total')}</table>`;
+  if(r.report==='reconciliation'){const st=REC[r.status];return `<table class="fin"><tr><th>${esc(r.account)}</th><th class="n">Amount</th></tr>
+    <tr class="sect"><td>Money we already have (books, Sep 30)</td><td class="n">${M(r.money_we_had_minor)}</td></tr>
+    ${row('Add: income received',M(r.income_minor))}${row('Less: money spent',M(-r.spend_minor))}
+    <tr class="sect"><td>Theoretical money</td><td class="n">${M(r.theoretical_minor)}</td></tr>
+    <tr class="sect"><td>Balance per bank statement</td><td class="n">${r.statement_balance_minor!=null?M(r.statement_balance_minor):'not provided'}</td></tr>
+    ${row('Difference',M(r.difference_minor||0),undefined,'total')}</table>
+    <div class="card-b"><div class="banner ${st[1]==='ok'?'info':st[1]==='bad'?'bad':'warn'}" style="margin:0">${r.status==='matched'?'<b>Reconciled.</b>&nbsp;Theoretical money equals the bank statement balance.':r.status==='no_statement'?'No bank balance found in the transactions file.':`<b>Does not match.</b>&nbsp;Difference of ${M(r.difference_minor)}. Flagged in Open items.${r.acknowledgement?' Reviewer note: '+esc(r.acknowledgement):''}`}</div>
+    <p class="sub">Credit card this month: charges ${M(r.credit_card.charges_minor)}, credits ${M(r.credit_card.credits_minor)}.</p></div>`}
+  if(r.report==='income')return `<table><tr><th>From</th><th>Date</th><th class="n">Amount</th><th>Document</th></tr>
+    ${r.items.map(x=>`<tr><td>${esc(x.from)}</td><td class="sub">${date(x.date)}</td><td class="n">${M(x.amount_minor)}</td><td>${x.document==='Missing'?chip('Missing','bad'):esc(x.document)}</td></tr>`).join('')}
+    <tr class="total"><td>Total income</td><td></td><td class="n">${M(r.total_minor)}</td><td></td></tr></table>`;
+  if(r.report==='contractors')return `<table><tr><th>Contractor</th><th class="n">Total (year to date)</th><th class="n">This month</th><th>Form</th></tr>
+    ${r.contractors.map(x=>`<tr><td>${esc(x.contractor)}</td><td class="n">${M(x.total_minor)}</td><td class="n">${M(x.this_month_minor)}</td><td>${x.form_ok?esc(x.form)+(x['1099_required']?' · '+chip('1099-NEC required','info'):''):chip('W-9 missing','bad')}</td></tr>`).join('')}
+    <tr class="total"><td>Total paid this month</td><td></td><td class="n">${M(r.total_this_month_minor)}</td><td></td></tr></table>
+    <div class="card-b sub">1099-NEC applies to US contractors paid ${M(r.threshold_1099_minor)} or more in the year (2026 threshold). Platforms like Upwork report their own payments.</div>`;
+  if(r.report==='open_items')return r.items.length?`<table><tr><th>Item</th><th class="n">Amount</th><th>Reason</th><th>Status</th></tr>${r.items.map(i=>`<tr><td>${esc(i.item)}</td><td class="n">${money(i.amount_minor)}</td><td class="sub">${esc(i.reason)}</td><td>${chip(i.status,i.status==='Open'?'bad':'ok')}</td></tr>`).join('')}</table>`:`<div class="empty"><b>No open items</b></div>`;
+  if(r.report==='pnl')return `<table class="fin"><tr><th>Account</th><th class="n">Oct 2026</th><th class="n">Sep 2026</th></tr>
+    <tr class="sect"><td colspan=3>Revenue</td></tr>${r.revenue.map(x=>row(nm(x),M(x.amount_minor),M(x.prior_minor))).join('')}${row('Total revenue',M(r.total_revenue_minor),M(r.prior.total_revenue_minor),'total')}
+    <tr class="sect"><td colspan=3>Expenses</td></tr>${r.expenses.map(x=>row(nm(x),M(x.amount_minor),M(x.prior_minor))).join('')}${row('Total expenses',M(r.total_expenses_minor),M(r.prior.total_expenses_minor),'total')}
+    ${r.suspense_pending_review_minor?row('Open items (Suspense)',M(r.suspense_pending_review_minor),'—'):''}${row('Net income',M(r.net_income_minor),M(r.prior.net_income_minor),'total')}</table>`;
+  if(r.report==='balance_sheet')return `<table class="fin"><tr><th>As of ${date(r.as_of)}</th><th class="n">Amount</th></tr>
+    <tr class="sect"><td colspan=2>Assets</td></tr>${r.assets.map(x=>row(nm(x),M(x.amount_minor))).join('')}${row('Total assets',M(r.total_assets_minor),undefined,'total')}
+    <tr class="sect"><td colspan=2>Liabilities</td></tr>${r.liabilities.map(x=>row(nm(x),M(x.amount_minor))).join('')}${row('Total liabilities',M(r.total_liabilities_minor),undefined,'total')}
+    <tr class="sect"><td colspan=2>Equity</td></tr>${r.equity.map(x=>row(nm(x),M(x.amount_minor))).join('')}${row('Total equity',M(r.total_equity_minor),undefined,'total')}</table>`;
+  if(r.report==='anomalies'){const T={possible_duplicate_charge:['bad','Possible duplicate charge'],unusual_amount:['warn','Unusual amount'],new_recurring_subscription:['info','New subscription']};
+    return r.anomalies.length?r.anomalies.map(a=>`<div class="att">${chip(T[a.type][1],T[a.type][0])}<div class="t"><b>${esc(a.detail)}</b><span>${esc(a.suggested_action)}</span></div></div>`).join(''):`<div class="empty"><b>Nothing unusual</b></div>`}
+  return ''}
+
+let TXF='all',TXQ='';
+R.transactions=async()=>{
+  const r=await api('/api/reports/ledger?period='+PERIOD);
+  let rows=r.entries;
+  if(TXF==='open')rows=rows.filter(t=>t.category==='Open item');if(TXF==='missing')rows=rows.filter(t=>t.receipt==='Missing');
+  if(TXF==='income')rows=rows.filter(t=>t.type==='Income');
+  if(TXQ)rows=rows.filter(t=>t.description.toLowerCase().includes(TXQ.toLowerCase()));
+  return `<div class="page-head"><div><h1>Ledger</h1><p>${PERIOD_NAME} · ${rows.length} of ${r.count} transactions</p></div><span class="grow"></span>
+    <input type="search" placeholder="Search" value="${esc(TXQ)}" oninput="TXQ=this.value;clearTimeout(window._q);window._q=setTimeout(render,250)">
+    <select onchange="TXF=this.value;render()"><option value="all">All</option><option value="income" ${TXF==='income'?'selected':''}>Income</option><option value="open" ${TXF==='open'?'selected':''}>Open items</option><option value="missing" ${TXF==='missing'?'selected':''}>Missing receipt</option></select></div>
+  <div class="card"><table><tr><th>Date</th><th>Description</th><th>Account</th><th>Category</th><th>Type</th><th class="n">Amount</th><th>Receipt</th></tr>
+  ${rows.map(e=>`<tr class="click" onclick="openTxn(${e.txn_id})"><td class="sub">${sdate(e.date)}</td><td>${esc(e.description)}</td><td class="sub">${esc(e.account)}</td><td>${e.category==='Open item'?chip('Open item','warn'):esc(e.category)}</td><td class="sub">${e.type}</td><td class="n">${money(e.type==='Income'?e.amount_minor:-e.amount_minor)}</td><td>${e.receipt==='Missing'?chip('Missing','bad'):e.receipt==='OK'?chip('OK','ok'):`<span class="sub">${esc(e.receipt)}</span>`}</td></tr>`).join('')}</table></div>`};
+
+R.activity=async()=>`<div class="page-head"><div><h1>Activity log</h1><p>Admin view: raw agent events, tool calls and backend results.</p></div><span class="grow"></span>
+  <button class="btn danger" onclick="doReset(this)">Reset demo data</button></div><div class="card card-b log" id="log">${S.log.map(logLine).join('')}</div>`;
+function logLine(e){const t=new Date(e.ts*1000).toLocaleTimeString();let s=e.text||'';
+  if(e.kind==='tool')s=`${e.phase} ${e.tool} ${e.phase==='start'?e.args||'':e.ok===false?'ERROR '+(e.preview||''):e.reason||''}`;
+  if(e.kind==='ledger_tool')s=`${e.phase} ${e.tool} ${e.phase==='start'?e.args:(e.ok?'ok ':'ERROR ')+e.ms+'ms '+(e.preview||'')}`;
+  if(e.kind==='approval')s=`${e.phase} ${e.tool||''} ${e.approval_id||''} ${e.resolution||''}`;
+  if(e.kind==='progress')s=`${e.step} ${e.note||''}`;
+  return `<div><span class="sub">${t}</span> <b>${esc(e.kind)}</b> ${esc(s)}</div>`}
+function appendLog(e){const l=$('#log');if(!l)return;l.insertAdjacentHTML('beforeend',logLine(e));l.scrollTop=l.scrollHeight}
+
+
+// ------------------------------------------------------------------ ask your books
+const ASK={sid:null,busy:false,since:0};
+function toggleAsk(){$('#modalRoot').innerHTML='';$('#ask').classList.toggle('hidden');if(!$('#ask').classList.contains('hidden'))$('#askIn').focus()}
+function addMsg(cls,html){const b=$('#askBody');b.insertAdjacentHTML('beforeend',`<div class="msg ${cls}">${html}</div>`);b.scrollTop=b.scrollHeight}
+async function askQ(q){q=(q||'').trim();if(!q||ASK.busy)return;$('#askIn').value='';$('.sugg')?.remove();addMsg('me',esc(q));
+  ASK.busy=true;ASK.since=Date.now()/1000;addMsg('status','<span id="askStatus">Reading the books…</span>');
+  try{const r=await api('/api/ask',{method:'POST',body:{question:q}});ASK.sid=r.session_id}catch(e){ASK.busy=false;$('#askStatus')?.parentElement.remove()}}
+const TOOLWORD={query_ledger:'Checking the ledger',run_report:'Running a report',reconcile:'Checking the bank reconciliation',memory_search:'Recalling what it learned'};
+function onAskEvent(e){if(e.ts<ASK.since-1)return;
+  if(e.kind==='tool'&&e.phase==='start'&&$('#askStatus'))$('#askStatus').textContent=(TOOLWORD[e.tool]||'Working')+'…';
+  if(e.kind==='assistant'){ASK.last=e.text}
+  if(e.kind==='run'&&/finished/.test(e.text||'')){$('#askStatus')?.parentElement.remove();
+    if(ASK.last)addMsg('bot',md(ASK.last));ASK.last='';ASK.busy=false}}
+async function newAsk(){await api('/api/ask/reset',{method:'POST'});ASK.sid=null;$('#askBody').innerHTML='<div class="msg bot">New conversation. What would you like to know?</div>'}
+
+// ------------------------------------------------------------------ transaction detail (audit trail)
+async function openTxn(id){const d=await api('/api/transactions/'+id);const t=d.txn;
+  const ent=d.entries.map(e=>`<div class="card" style="margin-top:8px"><div class="card-b" style="padding:10px 14px"><div class="sub">#${e.id} · ${esc(e.kind)} · ${date(e.date)}${e.reverses_entry_id?' · reverses #'+e.reverses_entry_id:''}</div>
+    <table style="margin-top:6px"><tr><th>Account</th><th class="n">Debit</th><th class="n">Credit</th></tr>${e.lines.map(l=>`<tr><td>${esc(l.account_name)}</td><td class="n">${l.debit_minor?acct(l.debit_minor):''}</td><td class="n">${l.credit_minor?acct(l.credit_minor):''}</td></tr>`).join('')}</table></div></div>`).join('')||'<p class="sub">Not posted yet.</p>';
+  $('#modalRoot').innerHTML=`<div class="modal-bg" onclick="if(event.target===this)this.remove()"><div class="modal">
+   <div class="row" style="display:flex;align-items:center;gap:8px"><h2 style="flex:1">${esc(t.description)}</h2><button class="btn ghost" onclick="$('#modalRoot').innerHTML=''">✕</button></div>
+   <div class="sub">${date(t.date)} · ${esc(d.account)} · ${esc(d.type)}</div>
+   <div style="font-size:26px;font-weight:600;margin:12px 0">${money(Math.abs(t.amount_minor))}</div>
+   <div class="kv"><span>Category</span><b>${d.category==='Open item'?chip('Open item','warn'):esc(d.category)}</b>
+     <span>How it was decided</span><b>${esc(d.method)}${t.confidence!=null&&t.cat_method==='model'?' · confidence '+Math.round(t.confidence*100)+'%':''}</b>
+     <span>Reason</span><span style="color:var(--ink-2)">${esc(t.cat_reason||'–')}</span>
+     <span>Receipt</span><span>${recChip(t.receipt_status)}</span>
+     ${d.invoice?`<span>Invoice</span><b>${esc(d.invoice)}</b>`:''}
+     <span>Source</span><span style="color:var(--ink-2)">${esc(d.source.file)}${d.source.row?' · row '+esc(d.source.row):''}</span></div>
+   ${d.receipt_url?`<img src="${d.receipt_url}" style="max-width:100%;border:1px solid var(--line);border-radius:8px;margin-bottom:8px">`:''}
+   <h3 style="margin:16px 0 4px;font-size:14px">Journal entries</h3>${ent}
+   ${d.audit.length?`<h3 style="margin:16px 0 4px;font-size:14px">Audit log</h3>${d.audit.map(a=>`<div class="sub">${new Date(a.ts).toLocaleString()} · ${esc(a.actor)} · ${esc(a.action)}</div>`).join('')}`:''}
+  </div></div>`}
+
+// ------------------------------------------------------------------ learning card
+function learningCard(){const runs=(S.status.runs||[]).filter(r=>r.unknown_categories!=null);if(!runs.length)return'';
+  const mx=Math.max(...runs.map(r=>r.unknown_categories),1);
+  return `<div class="card" style="margin-top:16px"><div class="card-h"><h2>Ledgerly is learning</h2></div><div class="card-b">
+    <div class="sub">Transactions it couldn't categorize on its own, per close. It remembers your review decisions.</div>
+    <div class="learn">${runs.slice(-5).map(r=>`<div><b style="color:var(--ink);font-size:15px">${r.unknown_categories}</b><i style="height:${8+60*r.unknown_categories/mx}px"></i>Run ${r.run_no}${r.learned_rules_used?`<br>${r.learned_rules_used} learned`:''}</div>`).join('')}</div></div></div>`}
+
+// ------------------------------------------------------------------ actions
+async function render(soft){const p=page();if(!R[p]){location.hash='overview';return}
+  if(soft&&['transactions','activity','review'].includes(p))return;
+  drawNav();const html=await R[p]();$('#main').innerHTML=html;bindDrop()}
+function bindDrop(){const d=$('#drop');if(!d)return;
+  d.ondragover=e=>{e.preventDefault();d.classList.add('over')};d.ondragleave=()=>d.classList.remove('over');
+  d.ondrop=e=>{e.preventDefault();d.classList.remove('over');upload(e.dataTransfer.files)}}
+$('#fileInput').onchange=e=>upload(e.target.files);
+let receiptFor=null;
+function pickReceipt(id){receiptFor=id;$('#receiptInput').click()}
+$('#receiptInput').onchange=async e=>{const f=e.target.files[0];if(!f||!receiptFor)return;const fd=new FormData();fd.append('file',f);
+  await api('/api/receipt/'+receiptFor,{method:'POST',body:fd});e.target.value='';toast('Receipt attached');await refresh();render()};
+async function upload(fl){if(!fl.length)return;const fd=new FormData();[...fl].forEach(f=>fd.append('files',f));await api('/api/upload',{method:'POST',body:fd});toast(`${fl.length} file${fl.length>1?'s':''} uploaded`);render()}
+async function useSample(sc){await api('/api/demo-files'+(sc?'?scenario='+sc:''),{method:'POST'});toast('Sample data loaded (fictional agency, 100 transactions)');render()}
+async function startClose(b){b.disabled=true;b.textContent='Starting…';try{await api('/api/close',{method:'POST',body:{period:PERIOD,message:'Close October'}});toast('Close started. You can leave this page; Ledgerly keeps working.')}catch(e){b.disabled=false;b.textContent='Close '+PERIOD_NAME}await refresh();render()}
+async function stopRun(){await api('/api/interrupt',{method:'POST'});toast('Stopping…');setTimeout(soon,1500)}
+async function decide(id,d,b){b.parentElement.querySelectorAll('button').forEach(x=>x.disabled=true);await api('/api/approvals/'+id,{method:'POST',body:{decision:d}});
+  toast(d==='deny'?'Email held back. The invoice stays a draft.':'Approved. Sending…');setTimeout(async()=>{await refresh();render()},1200)}
+async function resolveCat(key,id,b){const c=$('#c_'+id).value;if(!c){toast('Choose a category first');return}b.disabled=true;
+  try{await api('/api/open-items/'+key,{method:'POST',body:{category:c}});toast('Categorized as '+c)}finally{await refresh();render()}}
+async function resolveItem(key,res,note,b){b.disabled=true;try{await api('/api/open-items/'+key,{method:'POST',body:{resolution:res,note:note||''}});toast('Resolved')}finally{await refresh();render()}}
+async function teach(b){b.disabled=true;const r=await api('/api/teach',{method:'POST'});toast(`Ledgerly is saving ${r.rules} rule${r.rules>1?'s':''} for next month`);await refresh();render()}
+async function deliver(b){b.disabled=true;const r=await api('/api/deliver?period='+PERIOD,{method:'POST'});toast(r.status);window.open(r.url,'_blank');await refresh();render()}
+async function trigger(b){b.disabled=true;await api('/api/schedule/trigger',{method:'POST'});toast('Checking for overdue invoices. Any reminders will appear in Approvals.')}
+async function doReset(b){if(!b.dataset.arm){b.dataset.arm=1;b.textContent='Click again to confirm';setTimeout(()=>{delete b.dataset.arm;b.textContent='Reset demo data'},3000);return}
+  await api('/api/reset',{method:'POST'});toast('Demo data reset');await refresh();render()}
+
+(async()=>{await refresh();render();connect();setInterval(async()=>{const n=S.approvals.length;S.approvals=await api('/api/approvals').catch(()=>S.approvals);if(n!==S.approvals.length){drawNav();if(['approvals','overview'].includes(page()))render()}},6000)})();
+</script>
+</body>
+</html>

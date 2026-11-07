@@ -1,0 +1,775 @@
+{
+ "clients": [
+  {
+   "id": "northwind",
+   "name": "Northwind Coffee Co",
+   "email": "ap@northwindcoffee.example",
+   "aliases": [
+    "NORTHWIND COFFEE"
+   ],
+   "terms_days": 10,
+   "revenue_account": "4200"
+  },
+  {
+   "id": "halcyon",
+   "name": "Halcyon Health",
+   "email": "ap@halcyonhealth.example",
+   "aliases": [
+    "HALCYON HEALTH"
+   ],
+   "terms_days": 30,
+   "revenue_account": "4100"
+  },
+  {
+   "id": "pinecrest",
+   "name": "Pinecrest Realty",
+   "email": "billing@pinecrestrealty.example",
+   "aliases": [
+    "PINECREST RLTY",
+    "PINECREST REALTY"
+   ],
+   "terms_days": 15,
+   "revenue_account": "4000"
+  },
+  {
+   "id": "orbit",
+   "name": "Orbit Fitness",
+   "email": "finance@orbitfitness.example",
+   "aliases": [
+    "ORBIT FITNESS"
+   ],
+   "terms_days": 30,
+   "revenue_account": "4100"
+  },
+  {
+   "id": "lumen",
+   "name": "Lumen Labs",
+   "email": "accounts@lumenlabs.example",
+   "aliases": [
+    "LUMEN LABS"
+   ],
+   "terms_days": 30,
+   "revenue_account": "4000"
+  },
+  {
+   "id": "kestrel",
+   "name": "Kestrel Outdoor",
+   "email": "ap@kestreloutdoor.example",
+   "aliases": [
+    "KESTREL OUTDOOR"
+   ],
+   "terms_days": 15,
+   "revenue_account": "4000"
+  },
+  {
+   "id": "maple",
+   "name": "Maple & Co",
+   "email": "hello@mapleandco.example",
+   "aliases": [],
+   "terms_days": 0,
+   "revenue_account": "4000"
+  }
+ ],
+ "contractors": [
+  {
+   "name": "A. Nguyen",
+   "match": [
+    "A. NGUYEN"
+   ],
+   "form": "W-9 on file",
+   "needs_1099": true,
+   "ytd_before_sep_minor": 1260000
+  },
+  {
+   "name": "D. Kim",
+   "match": [
+    "D.KIM"
+   ],
+   "form": "W-9 on file (paid through Gusto)",
+   "needs_1099": true,
+   "ytd_before_sep_minor": 1400000
+  },
+  {
+   "name": "S. Ito",
+   "match": [
+    "S. ITO"
+   ],
+   "form": "W-9 on file",
+   "needs_1099": true,
+   "ytd_before_sep_minor": 330000
+  },
+  {
+   "name": "L. Okafor",
+   "match": [
+    "L OKAFOR"
+   ],
+   "form": "W-8BEN on file (foreign contractor)",
+   "needs_1099": false,
+   "ytd_before_sep_minor": 540000
+  },
+  {
+   "name": "Upwork freelancers",
+   "match": [
+    "UPWORK"
+   ],
+   "form": "Paid through Upwork (platform reports on 1099-K)",
+   "needs_1099": false,
+   "ytd_before_sep_minor": 785000
+  },
+  {
+   "name": "M. Garcia",
+   "match": [
+    "M. GARCIA"
+   ],
+   "form": "",
+   "needs_1099": true,
+   "ytd_before_sep_minor": 0
+  }
+ ],
+ "rules": [
+  {
+   "pattern": "GREENPOINT PROPERTIES",
+   "account": "6100",
+   "note": "Studio landlord"
+  },
+  {
+   "pattern": "STORESAFE",
+   "account": "6100",
+   "note": "Storage unit"
+  },
+  {
+   "pattern": "MONTHLY SERVICE FEE",
+   "account": "6700",
+   "note": "Bank fee"
+  },
+  {
+   "pattern": "INTEREST PAYMENT",
+   "account": "4900",
+   "note": "Bank interest"
+  }
+ ],
+ "category_accounts": {
+  "Income": "4000",
+  "Interest": "4900",
+  "Rent": "6100",
+  "Contractors": "5000",
+  "Software": "6200",
+  "Bank fees": "6700"
+ },
+ "opening": {
+  "date": "2026-08-31",
+  "checking": 41800.0,
+  "lines": [
+   [
+    "1000",
+    41800.0,
+    0
+   ],
+   [
+    "1200",
+    14000.0,
+    0
+   ],
+   [
+    "1500",
+    6400.0,
+    0
+   ],
+   [
+    "2000",
+    0,
+    2980.0
+   ],
+   [
+    "3000",
+    0,
+    20000.0
+   ],
+   [
+    "3900",
+    0,
+    39220.0
+   ]
+  ]
+ },
+ "transactions": [
+  {
+   "date": "2026-09-01",
+   "desc": "GREENPOINT PROPERTIES RENT SEP",
+   "account": "checking",
+   "amount": -3200.0,
+   "category": "Rent",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-01",
+   "desc": "STORESAFE BROOKLYN UNIT 114",
+   "account": "checking",
+   "amount": -189.0,
+   "category": "Rent",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-02",
+   "desc": "GRAMMARLY",
+   "account": "credit",
+   "amount": 30.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-02",
+   "desc": "WEBFLOW.COM",
+   "account": "credit",
+   "amount": 74.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-03",
+   "desc": "ASANA.COM",
+   "account": "credit",
+   "amount": 54.99,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-03",
+   "desc": "FOREIGN TRANSACTION FEE",
+   "account": "credit",
+   "amount": 1.27,
+   "category": "Bank fees",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-03",
+   "desc": "ZOOM.US 888-799-9666",
+   "account": "credit",
+   "amount": 15.99,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-04",
+   "desc": "ACH CREDIT NORTHWIND COFFEE INV-1035",
+   "account": "checking",
+   "amount": 6000.0,
+   "category": "Income",
+   "receipt": ""
+  },
+  {
+   "date": "2026-09-04",
+   "desc": "TWILIO SENDGRID",
+   "account": "credit",
+   "amount": 11.4,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-06",
+   "desc": "FOREIGN TRANSACTION FEE",
+   "account": "credit",
+   "amount": 1.05,
+   "category": "Bank fees",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-06",
+   "desc": "TWILIO SENDGRID",
+   "account": "credit",
+   "amount": 19.91,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-06",
+   "desc": "TYPEFORM",
+   "account": "credit",
+   "amount": 59.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-06",
+   "desc": "UPWORK -642019 ESCROW",
+   "account": "checking",
+   "amount": -950.0,
+   "category": "Contractors",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-07",
+   "desc": "1PASSWORD",
+   "account": "credit",
+   "amount": 23.94,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-07",
+   "desc": "ACH BATCH FEE",
+   "account": "checking",
+   "amount": -5.0,
+   "category": "Bank fees",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-08",
+   "desc": "AIRTABLE.COM",
+   "account": "credit",
+   "amount": 45.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-08",
+   "desc": "CLOUDFLARE",
+   "account": "credit",
+   "amount": 25.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-08",
+   "desc": "DROPBOX*BUSINESS",
+   "account": "credit",
+   "amount": 30.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-08",
+   "desc": "LINEAR.APP",
+   "account": "credit",
+   "amount": 40.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-08",
+   "desc": "SLACK T0ABC123",
+   "account": "credit",
+   "amount": 87.5,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-08",
+   "desc": "ZELLE TO A. NGUYEN",
+   "account": "checking",
+   "amount": -1800.0,
+   "category": "Contractors",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-09",
+   "desc": "WIRE OUT L OKAFOR LAGOS NG",
+   "account": "checking",
+   "amount": -1150.0,
+   "category": "Contractors",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-09",
+   "desc": "WIRE TRANSFER FEE",
+   "account": "checking",
+   "amount": -25.0,
+   "category": "Bank fees",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-09",
+   "desc": "ZAPIER.COM/CHARGE",
+   "account": "credit",
+   "amount": 69.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-10",
+   "desc": "FIGMA *MONTHLY",
+   "account": "credit",
+   "amount": 75.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-11",
+   "desc": "TWILIO SENDGRID",
+   "account": "credit",
+   "amount": 17.35,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-12",
+   "desc": "MIDJOURNEY INC.",
+   "account": "credit",
+   "amount": 30.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-13",
+   "desc": "GOOGLE *WORKSPACE_BRIGHTW",
+   "account": "credit",
+   "amount": 84.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-13",
+   "desc": "HOTJAR",
+   "account": "credit",
+   "amount": 39.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-13",
+   "desc": "NAMECHEAP.COM",
+   "account": "credit",
+   "amount": 13.84,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-13",
+   "desc": "NAMECHEAP.COM",
+   "account": "credit",
+   "amount": 13.79,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-14",
+   "desc": "ACH BATCH FEE",
+   "account": "checking",
+   "amount": -5.0,
+   "category": "Bank fees",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-14",
+   "desc": "GUSTO CONTRACTOR PMT D.KIM",
+   "account": "checking",
+   "amount": -2000.0,
+   "category": "Contractors",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-16",
+   "desc": "LOOM, INC.",
+   "account": "credit",
+   "amount": 60.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-16",
+   "desc": "POSTMARK APP",
+   "account": "credit",
+   "amount": 15.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-16",
+   "desc": "TWILIO SENDGRID",
+   "account": "credit",
+   "amount": 24.82,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-16",
+   "desc": "ZELLE TO S. ITO",
+   "account": "checking",
+   "amount": -650.0,
+   "category": "Contractors",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-17",
+   "desc": "GITHUB, INC.",
+   "account": "credit",
+   "amount": 44.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-18",
+   "desc": "INCOMING WIRE FEE",
+   "account": "checking",
+   "amount": -15.0,
+   "category": "Bank fees",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-18",
+   "desc": "NAMECHEAP.COM",
+   "account": "credit",
+   "amount": 16.25,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-18",
+   "desc": "WIRE IN HALCYON HEALTH INV-1033",
+   "account": "checking",
+   "amount": 9800.0,
+   "category": "Income",
+   "receipt": ""
+  },
+  {
+   "date": "2026-09-19",
+   "desc": "CANVA* PRO TEAMS",
+   "account": "credit",
+   "amount": 30.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-19",
+   "desc": "HUBSPOT INC",
+   "account": "credit",
+   "amount": 90.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-19",
+   "desc": "SENTRY.IO",
+   "account": "credit",
+   "amount": 26.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-20",
+   "desc": "UPWORK -651180 ESCROW",
+   "account": "checking",
+   "amount": -1275.0,
+   "category": "Contractors",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-21",
+   "desc": "ACH BATCH FEE",
+   "account": "checking",
+   "amount": -5.0,
+   "category": "Bank fees",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-21",
+   "desc": "AWS EMEA AWS.AMAZON.CO",
+   "account": "credit",
+   "amount": 364.43,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-22",
+   "desc": "ACH CREDIT PINECREST RLTY INV-1036",
+   "account": "checking",
+   "amount": 4200.0,
+   "category": "Income",
+   "receipt": ""
+  },
+  {
+   "date": "2026-09-22",
+   "desc": "SHUTTERSTOCK",
+   "account": "credit",
+   "amount": 49.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-24",
+   "desc": "ADOBE *CREATIVE CLOUD",
+   "account": "credit",
+   "amount": 359.88,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-24",
+   "desc": "ZELLE TO A. NGUYEN",
+   "account": "checking",
+   "amount": -900.0,
+   "category": "Contractors",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-25",
+   "desc": "CALENDLY",
+   "account": "credit",
+   "amount": 36.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-25",
+   "desc": "INTERCOM INC",
+   "account": "credit",
+   "amount": 74.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-25",
+   "desc": "MAILCHIMP *MONTHLY",
+   "account": "credit",
+   "amount": 110.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-25",
+   "desc": "NOTION LABS INC",
+   "account": "credit",
+   "amount": 48.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-25",
+   "desc": "VERCEL INC.",
+   "account": "credit",
+   "amount": 20.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-26",
+   "desc": "TWILIO SENDGRID",
+   "account": "credit",
+   "amount": 19.64,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-28",
+   "desc": "ACH BATCH FEE",
+   "account": "checking",
+   "amount": -5.0,
+   "category": "Bank fees",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-28",
+   "desc": "DESCRIPT INC",
+   "account": "credit",
+   "amount": 24.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-28",
+   "desc": "MIRO.COM",
+   "account": "credit",
+   "amount": 48.0,
+   "category": "Software",
+   "receipt": "ok"
+  },
+  {
+   "date": "2026-09-30",
+   "desc": "INTEREST PAYMENT",
+   "account": "checking",
+   "amount": 2.87,
+   "category": "Interest",
+   "receipt": ""
+  },
+  {
+   "date": "2026-09-30",
+   "desc": "MONTHLY SERVICE FEE",
+   "account": "checking",
+   "amount": -15.0,
+   "category": "Bank fees",
+   "receipt": "ok"
+  }
+ ],
+ "invoices": [
+  {
+   "number": "INV-1033",
+   "client": "halcyon",
+   "issue": "2026-08-20",
+   "due": "2026-09-19",
+   "lines": [
+    [
+     "Patient portal build - phase 1",
+     1,
+     9800.0
+    ]
+   ],
+   "opening": true
+  },
+  {
+   "number": "INV-1036",
+   "client": "pinecrest",
+   "issue": "2026-08-25",
+   "due": "2026-09-09",
+   "lines": [
+    [
+     "Listing microsite design",
+     1,
+     4200.0
+    ]
+   ],
+   "opening": true
+  },
+  {
+   "number": "INV-1035",
+   "client": "northwind",
+   "issue": "2026-09-01",
+   "due": "2026-09-11",
+   "lines": [
+    [
+     "September retainer",
+     1,
+     6000.0
+    ]
+   ]
+  },
+  {
+   "number": "INV-1038",
+   "client": "halcyon",
+   "issue": "2026-09-15",
+   "due": "2026-10-15",
+   "lines": [
+    [
+     "Patient portal build - phase 2",
+     1,
+     14200.0
+    ]
+   ]
+  },
+  {
+   "number": "INV-1040",
+   "client": "pinecrest",
+   "issue": "2026-09-20",
+   "due": "2026-10-05",
+   "lines": [
+    [
+     "Open house campaign: print + social kit",
+     1,
+     3750.0
+    ]
+   ]
+  },
+  {
+   "number": "INV-1041",
+   "client": "northwind",
+   "issue": "2026-10-01",
+   "due": "2026-10-11",
+   "lines": [
+    [
+     "October retainer",
+     1,
+     6000.0
+    ]
+   ]
+  }
+ ]
+}

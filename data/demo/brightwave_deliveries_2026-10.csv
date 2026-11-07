@@ -1,0 +1,9 @@
+date,client,project,description,billing,hours,rate,fixed_fee,status
+2026-10-06,Northwind Coffee Co,Retainer,Seasonal menu boards,retainer,14,,,delivered
+2026-10-08,Halcyon Health,Patient portal,Post-launch fixes (warranty),non-billable,6,,,delivered
+2026-10-10,Orbit Fitness,Website rebuild,"Sprint 1: IA, design system, home + class pages",hourly,48,150,,delivered
+2026-10-24,Orbit Fitness,Website rebuild,"Sprint 2: booking flow, CMS, QA",hourly,48,150,,delivered
+2026-10-15,Lumen Labs,Brand identity,Milestone 2: logo suite + brand guidelines,fixed,,,9500,delivered
+2026-10-29,Kestrel Outdoor,Fall campaign,Campaign key visuals + 12 social assets,hourly,22,140,,delivered
+2026-10-14,Maple & Co,Logo refresh,Logo refresh (paid by card via Stripe),fixed,,,1200,delivered
+2026-10-30,Lumen Labs,Brand identity,Milestone 3: packaging (in progress),fixed,,,6000,in_progress

@@ -1,0 +1,9 @@
+zoowork==0.9.0
+fastapi==0.162.2
+uvicorn[standard]==0.54.0
+python-dotenv==1.2.4
+pdfplumber==0.11.10
+reportlab==5.1.0
+pillow==13.0.0
+mcp==2.3.0
+python-multipart==0.0.33
