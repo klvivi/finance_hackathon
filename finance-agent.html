@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Finance Agent</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#14181f;--mu:#6b7380;--bd:#e3e6eb;--ac:#2f5bea;--ok:#1a8f4c;--wn:#b7791f;--er:#c53030;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1218;--card:#181c25;--tx:#e8ebf0;--mu:#8b94a3;--bd:#2a3040;--ac:#6b8cff;--ok:#4cc382;--wn:#e0a94a;--er:#f26d6d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1218;--card:#181c25;--tx:#e8ebf0;--mu:#8b94a3;--bd:#2a3040;--ac:#6b8cff;--ok:#4cc382;--wn:#e0a94a;--er:#f26d6d;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 -apple-system,Inter,"Segoe UI",sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 16px}
+h1{font-size:20px;margin:0}.sub{color:var(--mu);margin:2px 0 16px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+button{font:inherit;border:1px solid var(--bd);background:var(--card);color:var(--tx);padding:7px 14px;border-radius:8px;cursor:pointer}
+button.p{background:var(--ac);border-color:var(--ac);color:#fff}button:disabled{opacity:.5;cursor:default}
+.steps{display:flex;gap:6px;margin:0 0 16px;overflow-x:auto}
+.st{flex:1;min-width:120px;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--card);cursor:pointer}
+.st b{display:block;font-size:12px;color:var(--mu);font-weight:600}.st span{font-size:13px}
+.st.run{border-color:var(--ac)}.st.done{border-color:var(--ok)}.st.done b{color:var(--ok)}.st.act{box-shadow:0 0 0 2px var(--ac)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{font-size:15px;margin:0 0 10px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.k{border:1px solid var(--bd);border-radius:10px;padding:10px}.k small{color:var(--mu)}.k div{font-size:18px;font-weight:600}
+.scroll{overflow-x:auto;max-height:340px;overflow-y:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:6px 8px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
+th{position:sticky;top:0;background:var(--card);color:var(--mu);font-weight:600}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.chip{padding:2px 8px;border-radius:99px;font-size:12px;border:1px solid var(--bd)}
+.ok{color:var(--ok)}.wn{color:var(--wn)}.er{color:var(--er)}
+.log{font:12px/1.6 ui-monospace,Menlo,monospace;color:var(--mu);max-height:130px;overflow:auto}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+select{font:inherit;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:4px}
+input[type=text],input:not([type]){font:inherit;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:4px 6px;width:100%}
+.banner{padding:10px 12px;border-radius:8px;border:1px solid var(--wn);margin-bottom:10px}
+.banner.g{border-color:var(--ok)}
+</style></head><body><div class="wrap">
+<div class="top"><div><h1>Finance Agent</h1><div class="sub">Month-end bookkeeping: load your data → categorize → reconcile → review → report</div></div>
+<div><button id="run" class="p">Run month-end</button> <button id="reset">Reset</button></div></div>
+<div class="steps" id="steps"></div>
+<div id="main"></div>
+<div class="card"><h2>Agent log</h2><div class="log" id="log">Idle. Press “Run month-end”.</div></div>
+</div>
+<script>
+const STAGES=["Load data","Categorize","Reconcile","Human review","Report"];
+const CATS=["Rent","Contractors","Software","Bank fees","Income"];
+const fmt=n=>(n<0?"-":"")+"$"+Math.abs(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+let S,seed;
+function rnd(){seed=(seed*1664525+1013904223)%4294967296;return seed/4294967296}
+function pick(a){return a[Math.floor(rnd()*a.length)]}
+function fresh(){S={stage:-1,view:0,tx:[],bank:0,explained:false,approved:false,tab:0,log:[],opening:"",bankRaw:"",paste:"",err:"",fileName:""};seed=42;}
+const VENDORS=[["Harbor Property LLC","Rent",-2400,.03],["Maya Chen (design)","Contractors",-900,.1],["Dev Patel (eng)","Contractors",-1400,.1],["AWS","Software",-180,.15],["GitHub","Software",-21,.1],["Notion","Software",-16,.08],["Figma","Software",-45,.08],["Wire fee","Bank fees",-25,.08],["Monthly maintenance","Bank fees",-12,.04],["Stripe payout","Income",3200,.15],["Acme Corp invoice","Income",5400,.1],["AMZN Mktp US",null,-64,.07],["Venmo cashout",null,-150,.04],["Unknown ACH 4471",null,-310,.03]];
+function generate(){const tx=[];for(let i=0;i<100;i++){let r=rnd(),a=0,v=VENDORS[0];for(const x of VENDORS){a+=x[3];if(r<=a){v=x;break}}
+const amt=+(v[2]*(0.8+rnd()*.5)).toFixed(2);const d=1+Math.floor(rnd()*30);
+tx.push({id:i+1,date:"2026-10-"+String(d).padStart(2,"0"),desc:v[0],amount:amt,truth:v[1],cat:null,receipt:null})}
+tx.sort((a,b)=>a.date.localeCompare(b.date));tx.forEach((t,i)=>t.id=i+1);return tx}
+const RULES=[["Rent",/rent|landlord|property|lease/i],["Contractors",/contract|freelanc|consult|design|\(eng\)|payroll|upwork/i],["Software",/aws|github|notion|figma|slack|google|saas|software|subscription|openai|anthropic|zoom/i],["Bank fees",/fee|maintenance|wire|overdraft|service charge/i]];
+function categorize(){S.tx.forEach(t=>{const hit=RULES.find(r=>r[1].test(t.desc));t.cat=t.amount>0?"Income":(hit?hit[0]:null);t.receipt=t.cat==="Income"?"n/a":(t.receipt||"n/a")})}
+const open=()=>S.tx.filter(t=>!t.cat||(t.amount<0&&t.receipt==="missing"));
+const sumTx=()=>+S.tx.reduce((s,t)=>s+t.amount,0).toFixed(2);const ledger=()=>+((parseFloat(S.opening)||0)+sumTx()).toFixed(2);
+function log(m){S.log.push(new Date().toLocaleTimeString()+"  "+m);document.getElementById("log").innerHTML=S.log.join("<br>");document.getElementById("log").scrollTop=1e6}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function runAll(){if(!S.tx.length){S.err="Add your transactions first.";S.view=0;render();return}if(S.stage>=1)return;document.getElementById("run").disabled=true;S.err="";
+S.stage=1;S.view=1;render();log("Stage 1: using "+S.tx.length+" transactions you provided.");await wait(700);
+
+log("Stage 2: categorizing (Rent, Contractors, Software, Bank fees). Unknowns left uncategorized.");await wait(1000);
+categorize();log(`Categorized ${S.tx.filter(t=>t.cat).length}/100. ${open().length} open items.`);S.stage=2;S.view=2;render();
+log("Stage 3: reconciling against bank statement balance…");await wait(900);
+const bi=parseFloat(S.bankRaw);S.bank=isNaN(bi)?ledger():bi;
+log(S.bank!==ledger()?`Mismatch flagged: ${fmt(S.bank-ledger())}`:"Balances match.");S.stage=3;S.view=3;render();
+log("Stage 4: waiting for human review.");}
+function approve(){S.approved=true;S.stage=4;S.view=4;log("Approved. Report delivered.");render()}
+function setCat(id,c){const t=S.tx.find(x=>x.id===id);t.cat=c||null;if(c&&t.receipt==="missing"&&t.amount>0)t.receipt="n/a";render()}
+function setRc(id){const t=S.tx.find(x=>x.id===id);t.receipt="ok";render()}
+function tbl(rows,cols){return `<div class="scroll"><table><thead><tr>${cols.map(c=>`<th class="${c[2]||""}">${c[0]}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td class="${c[2]||""}">${c[1](r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`}
+const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function upload(){return `<div class="card"><h2>1 · Your transactions</h2><p class="sub">Upload a CSV with columns <b>date, description, amount</b> (or debit / credit). Optional column: <b>receipt</b> (ok / missing).</p><p><input type="file" id="file" accept=".csv,text/csv"></p><p>Or paste CSV:</p><textarea id="paste" rows="6" style="width:100%;font:12px ui-monospace,monospace;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px" placeholder="date,description,amount&#10;2026-10-01,Harbor Property LLC,-2400">${esc(S.paste)}</textarea><div class="kpis"><label class="k"><small>Opening balance (optional)</small><input id="open0" value="${esc(S.opening)}" placeholder="0.00"></label><label class="k"><small>Bank statement ending balance</small><input id="bankin" value="${esc(S.bankRaw)}" placeholder="from your statement"></label></div><p><button class="p" id="load">Load pasted CSV</button> <button id="sample">Use sample data</button></p>${S.err?`<div class="banner">${S.err}</div>`:""}${S.tx.length?`<div class="banner g">✓ ${S.tx.length} transactions loaded${S.fileName?" from "+esc(S.fileName):""}. Press <b>Run month-end</b>.</div>`:""}</div>`}
+function parseCSV(txt){const rows=[];let r=[],c="",q=false;for(let i=0;i<txt.length;i++){const ch=txt[i];if(q){if(ch=='"'&&txt[i+1]=='"'){c+='"';i++}else if(ch=='"')q=false;else c+=ch}else if(ch=='"')q=true;else if(ch==","){r.push(c);c=""}else if(ch=="\n"||ch=="\r"){if(ch=="\r"&&txt[i+1]=="\n")i++;r.push(c);c="";if(r.some(x=>x.trim()))rows.push(r);r=[]}else c+=ch}r.push(c);if(r.some(x=>x.trim()))rows.push(r);return rows}
+function loadCSV(txt){if(S.stage>=1){S.err="Press Reset to load new data.";return render()}const rows=parseCSV((txt||"").trim());if(rows.length<2){S.err="Need a header row and at least one transaction.";return render()}
+const h=rows[0].map(x=>x.trim().toLowerCase()),f=(...k)=>h.findIndex(x=>k.some(y=>x.includes(y)));const di=f("date"),ni=f("desc","memo","name","detail","payee"),ai=f("amount"),db=f("debit"),cr=f("credit"),ri=f("receipt");
+if(di<0||ni<0||(ai<0&&db<0&&cr<0)){S.err="Couldn't find columns. Need: date, description, and amount (or debit/credit).";return render()}
+const num=s=>{const n=parseFloat(String(s||"").replace(/[$,\s]/g,"").replace(/^\((.*)\)$/,"-$1"));return isNaN(n)?0:n};
+const rc=s=>{s=(s||"").trim().toLowerCase();return /^(ok|y|yes|true|1)$/.test(s)?"ok":/^(missing|n|no|false|0)$/.test(s)?"missing":null};
+S.tx=rows.slice(1).map((r,i)=>({id:i+1,date:(r[di]||"").trim(),desc:(r[ni]||"").trim(),amount:ai>=0?num(r[ai]):+(num(r[cr])-Math.abs(num(r[db]))).toFixed(2),cat:null,receipt:ri>=0?rc(r[ri]):null})).filter(t=>t.desc||t.amount);S.tx.forEach((t,i)=>t.id=i+1);
+S.err="";S.view=0;log("Loaded "+S.tx.length+" transactions"+(S.fileName?" from "+S.fileName:"")+".");render()}
+const txCols=[["#",t=>t.id],["Date",t=>t.date],["Description",t=>t.desc],["Amount",t=>`<span class="${t.amount<0?"":"ok"}">${fmt(t.amount)}</span>`,"n"]];
+function kpis(a){return `<div class="kpis">${a.map(x=>`<div class="k"><small>${x[0]}</small><div class="${x[2]||""}">${x[1]}</div></div>`).join("")}</div>`}
+function catTag(t){return t.cat?`<span class="chip">${t.cat}</span>`:`<span class="chip wn">Open item</span>`}
+function rcTag(t){return t.receipt==="ok"?`<span class="ok">✓ ok</span>`:t.receipt==="n/a"?`<span class="ch">—</span>`:`<span class="er">missing</span>`}
+function view(){const v=S.view;
+if(v===0)return upload();
+if(v===1)return `<div class="card"><h2>1 · Transactions (transactions.csv)</h2>${kpis([["Rows",S.tx.length],["Inflow",fmt(S.tx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0)),"ok"],["Outflow",fmt(S.tx.filter(t=>t.amount<0).reduce((s,t)=>s+t.amount,0))]])}${tbl(S.tx,txCols)}<p><button id="dl">Download CSV</button></p></div>`;
+if(v===2){const c={};S.tx.forEach(t=>{const k=t.cat||"Open items";c[k]=(c[k]||0)+1});
+return `<div class="card"><h2>2 · Categorize & receipts</h2>${kpis(Object.entries(c).map(([k,n])=>[k,n,k==="Open items"?"wn":""]))}${tbl(S.tx,[...txCols,["Category",catTag],["Receipt",rcTag]])}</div>`}
+if(v===3){const l=ledger(),d=+(S.bank-l).toFixed(2),mm=d!==0&&!S.explained;
+return `<div class="card"><h2>3 · Reconciliation</h2>${kpis([["Ledger balance",fmt(l)],["Bank statement",fmt(S.bank)],["Difference",fmt(d),mm?"er":"ok"]])}
+<div class="banner ${mm?"":"g"}">${d===0?"✓ Balances match.":S.explained?"Mismatch marked as explained.":"⚠ Mismatch flagged. Resolve it before approving."}</div>
+${d!==0&&!S.explained?`<button id="expl">Mark as explained (timing / fee)</button>`:""}</div>${reviewCard()}`}
+if(v===4)return reportView();return ""}
+function reviewCard(){const o=open();
+return `<div class="card"><h2>4 · Human review</h2>${o.length?tbl(o,[["Date",t=>t.date],["Description",t=>t.desc],["Amount",t=>fmt(t.amount),"n"],["Category",t=>`<select data-cat="${t.id}"><option value="">Choose…</option>${CATS.map(c=>`<option ${t.cat===c?"selected":""}>${c}</option>`).join("")}</select>`],["Receipt",t=>t.receipt==="missing"?`<button data-rc="${t.id}">Mark received</button>`:rcTag(t)]]):`<p class="ok">No open items.</p>`}
+<p><button class="p" id="apv" ${S.approved?"disabled":""}>Approve & generate report</button> <span class="sub">${o.length} open · ${ledger()!==S.bank&&!S.explained?"1 mismatch":"reconciled"}</span></p></div>`}
+function reportView(){const T=["Cover","Ledger","Expenses","Reconciliation","Income","Contractors","Open items"];
+const exp=S.tx.filter(t=>t.amount<0),by={};exp.forEach(t=>{const k=t.cat||"Uncategorized";by[k]=(by[k]||0)+t.amount});
+const inc=S.tx.filter(t=>t.cat==="Income"),con=S.tx.filter(t=>t.cat==="Contractors");
+const tot=a=>fmt(a.reduce((s,t)=>s+t.amount,0));let b="";
+if(S.tab===0)b=kpis([["Period","Oct 2026"],["Income",tot(inc),"ok"],["Expenses",tot(exp)],["Net",fmt(sumTx())],["Open items",open().length,open().length?"wn":"ok"]]);
+if(S.tab===1)b=tbl(S.tx,[...txCols,["Category",catTag]]);
+if(S.tab===2)b=tbl(Object.entries(by),[["Category",r=>r[0]],["Total",r=>fmt(r[1]),"n"]]);
+if(S.tab===3)b=kpis([["Ledger",fmt(ledger())],["Bank",fmt(S.bank)],["Difference",fmt(S.bank-ledger()),S.bank===ledger()||S.explained?"ok":"er"]]);
+if(S.tab===4)b=tbl(inc,txCols);
+if(S.tab===5)b=tbl(con,txCols);
+if(S.tab===6)b=open().length?tbl(open(),[...txCols,["Receipt",rcTag]]):`<p class="ok">None.</p>`;
+return `<div class="card"><h2>5 · Month-end report</h2><div class="tabs">${T.map((t,i)=>`<button data-tab="${i}" class="${S.tab===i?"on":""}">${t}</button>`).join("")}</div>${b}</div>`}
+function render(){document.getElementById("steps").innerHTML=STAGES.map((n,i)=>`<div class="st ${S.stage===i&&i<4?"run":""} ${S.stage>i?"done":""} ${S.view===i?"act":""}" data-v="${i}"><b>STEP ${i+1}</b><span>${n}</span></div>`).join("");
+document.getElementById("main").innerHTML=view();
+document.getElementById("run").disabled=S.stage>=0&&S.stage<4;
+if(S.stage>=3&&S.view===3){}
+}
+document.addEventListener("click",e=>{const t=e.target,v=t.closest("[data-v]"),id=t.id;
+if(v&&S.stage>=+v.dataset.v){const i=+v.dataset.v;S.view=i===3?3:i;render();return}
+if(t.dataset.tab){S.tab=+t.dataset.tab;render()}
+if(t.dataset.rc)setRc(+t.dataset.rc);
+if(id==="expl"){S.explained=true;render()}
+if(id==="apv")approve();if(id==="load")loadCSV(S.paste);if(id==="sample"){if(S.stage>=1)return;seed=42;S.tx=generate();S.fileName="";S.paste="";S.bankRaw=String(+(sumTx()-37.5).toFixed(2));S.err="";log("Loaded 100 sample transactions.");render()}
+if(id==="dl"){const csv="id,date,description,amount\n"+S.tx.map(x=>[x.id,x.date,`"${x.desc}"`,x.amount].join(",")).join("\n");const a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);a.download="transactions.csv";a.click()}});
+document.addEventListener("change",e=>{if(e.target.dataset.cat)setCat(+e.target.dataset.cat,e.target.value);if(e.target.id==="file"){const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{S.paste=rd.result;S.fileName=f.name;loadCSV(rd.result)};rd.readAsText(f)}});
+document.addEventListener("input",e=>{const i=e.target.id;if(i==="paste")S.paste=e.target.value;if(i==="open0")S.opening=e.target.value;if(i==="bankin")S.bankRaw=e.target.value});
+document.getElementById("run").onclick=runAll;
+document.getElementById("reset").onclick=()=>{fresh();document.getElementById("log").textContent="Idle.";render()};
+fresh();render();
+</script></body></html>
