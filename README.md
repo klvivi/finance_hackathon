@@ -87,3 +87,8 @@ Check charges under **Usage** in ZooWork Platform.
 ## Layout
 `backend/` (ledger, books, tools, runtime, MCP, API) · `static/index.html` (UI) · `seed/generate.py` (dataset) ·
 `data/demo` (sample upload) · `data/scenarios/missing_transaction` · `data/seed/history.json` (September) · `tests/test_pipeline.py`.
+
+## Netlify landing page
+The standalone, static product website is in `netlify-site/`; it does not depend on the Ledgerly backend or expose its API key.
+Deploy the repository with Netlify (the root `netlify.toml` publishes `netlify-site/`), or run
+`netlify deploy --prod --dir=netlify-site` with the Netlify CLI.
